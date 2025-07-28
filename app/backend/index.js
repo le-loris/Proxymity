@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const defaults = require('./defaults.json');
 
 const app = express();
 const PORT = 3000;
@@ -12,9 +13,9 @@ app.use(bodyParser.json());
 // Sert les fichiers frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Exemple route API
+// Route API qui retourne le contenu de defaults.json
 app.get('/api/services', (req, res) => {
-  res.json([{ name: "exemple", port: 1234 }]);
+  res.json(defaults);
 });
 
 app.listen(PORT, () => {

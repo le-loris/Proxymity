@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import ServiceCard from './components/ServiceCard';
+import AddCard from './components/AddCard';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/services')
+      .then((res) => res.json())
+      .then((data) => setServices(data));
+  }, []);
+
+  const handleEdit = (serviceName) => {
+    alert(`Édition du service : ${serviceName}`);
+  };
+
+  const handleAdd = () => {
+    alert('Ajout d’un nouveau service');
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div style={{
+      maxWidth: '1200px',
+      margin: '2rem auto',
+      fontFamily: 'sans-serif',
+    }}>
+      <h1 style={{ marginBottom: '1.5rem' }}>Gestion des services</h1>
+
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '1.5rem',
+      }}>
+        {services.map((service, index) => (
+          <ServiceCard
+            key={index}
+            title={service.name}
+            data={{
+              Domaine: service.domain,
+              Port: service.port,
+              SousDomaine: service.subdomain,
+            }}
+            onEdit={handleEdit}
+          />
+        ))}
+
+        <AddCard onClick={handleAdd} />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
