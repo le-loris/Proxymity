@@ -68,7 +68,7 @@ function ServiceCard({ title, data, onEdit }) {
       {/* Contenu */}
       <div style={{ padding: '1rem' }}>
         {Object.entries(data).map(([key, value]) => (
-          <div key={key} style={{ marginBottom: '0.3rem', fontSize: '0.95rem' }}>
+          <div key={key} style={{ textAlign: 'left', marginBottom: '0.3rem', fontSize: '0.95rem' }}>
             <span style={{ fontWeight: 600 }}>{key}</span>: {value}
           </div>
         ))}
