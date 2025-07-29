@@ -1,0 +1,10 @@
+{
+    "Authentik":{
+        "file":"Authentik.conf",
+        "description": "Template for sites secured by Authentik."
+    },
+    "Insecure":{
+        "file":"insecure.conf",
+        "description": "Template for sites that manage their own security."
+    }
+}

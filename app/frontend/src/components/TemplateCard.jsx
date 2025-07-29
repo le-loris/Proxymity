@@ -5,7 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 
-function TemplateCard({ name, text, onEdit }) {
+function TemplateCard({ name, meta = {}, onEdit }) {
   return (
     <Paper
       elevation={4}
@@ -29,7 +29,7 @@ function TemplateCard({ name, text, onEdit }) {
         </Tooltip>
       </Stack>
       <Typography sx={{ px: 2, py: 1, fontSize: '0.98rem', color: 'text.secondary', whiteSpace: 'pre-line' }}>
-        {text}
+        {meta.description || <span style={{ color: '#888' }}>(No description)</span>}
       </Typography>
     </Paper>
   );

@@ -4,11 +4,18 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-markup';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-ini';
+import 'prismjs/themes/prism-tomorrow.css';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 
 function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit, onDelete, loading = false, error = '' }) {
-  const [form, setForm] = useState(initialData);
+  const [form, setForm] = useState({ ...initialData, description: initialData.description ?? (initialData.meta?.description ?? '') });
   const [localError, setLocalError] = useState('');
 
   useEffect(() => {
@@ -32,7 +39,8 @@ function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit
       return;
     }
     setLocalError('');
-    onSubmit(form);
+    const { name, text, description } = form;
+    onSubmit({ name, text, meta: { description: description || '' } });
   };
 
   const handleDelete = () => {
@@ -42,7 +50,7 @@ function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit
   };
 
   return (
-    <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onCancel} maxWidth="md" fullWidth>
       <form onSubmit={handleSubmit}>
         <DialogTitle>{mode === 'edit' ? 'Edit' : 'Add'} a template</DialogTitle>
         <DialogContent>
@@ -59,18 +67,40 @@ function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit
               variant="outlined"
             />
             <TextField
-              id="text"
-              name="text"
-              label="Text"
-              value={form.text ?? ''}
+              id="description"
+              name="description"
+              label="Description"
+              value={form.description ?? ''}
               onChange={handleChange}
               fullWidth
               size="small"
-              multiline
-              minRows={8}
-              maxRows={20}
               variant="outlined"
             />
+            <div>
+              <div style={{ fontWeight: 500, marginBottom: 4, color: '#bbb' }}>Configuration</div>
+              <Editor
+                value={form.text ?? ''}
+                onValueChange={code => setForm(f => ({ ...f, text: code }))}
+                highlight={code => Prism.highlight(code, Prism.languages.ini, 'ini')}
+                padding={12}
+                style={{
+                  fontFamily: 'Fira Mono, Menlo, Monaco, Consolas, monospace',
+                  fontSize: 15,
+                  background: '#232323',
+                  borderRadius: 6,
+                  minHeight: 180,
+                  maxHeight: 400,
+                  overflow: 'auto',
+                  border: '1px solid #444',
+                  color: '#fff',
+                  outline: 'none',
+                  marginBottom: 4
+                }}
+                textareaId="text"
+                name="text"
+                disabled={loading}
+              />
+            </div>
             <div style={{ color: 'red', minHeight: 20 }}>{localError || error}</div>
           </Stack>
         </DialogContent>
