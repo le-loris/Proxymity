@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-function ServiceCard({ title, data, onEdit }) {
+function ServiceCard({ title, data, onEdit, fields }) {
   const [enabled, setEnabled] = useState(true);
 
   const toggle = () => setEnabled(!enabled);
@@ -26,7 +26,7 @@ function ServiceCard({ title, data, onEdit }) {
           <div style={{ display: 'flex', gap: '0.3rem' }}>
             <button
               onClick={() => onEdit?.(title)}
-              title="Modifier"
+              title="Edit"
               style={{
                 background: '#eee',
                 border: 'none',
@@ -40,7 +40,7 @@ function ServiceCard({ title, data, onEdit }) {
             </button>
             <button
               onClick={toggle}
-              title={enabled ? "Désactiver" : "Activer"}
+              title={enabled ? "Disable" : "Enable"}
               style={{
                 background: enabled ? '#cce5cc' : '#f8d7da',
                 border: 'none',
@@ -58,10 +58,13 @@ function ServiceCard({ title, data, onEdit }) {
 
       {/* Contenu */}
       <div style={{ padding: '1rem' }}>
-        {Object.entries(data).map(([key, value]) => (
-          <div key={key} style={{ textAlign: 'left', marginBottom: '0.3rem', fontSize: '0.95rem' }}>
-            <span style={{ fontWeight: 600 }}>{key}</span>: {typeof value === 'boolean' ? (value ? '✅' : '⛔') : value}
-          </div>
+        {Object.entries(data)
+          .filter(([key]) => key !== 'name' && key !== 'enabled')
+          .filter(([key, value]) => value !== "" && value !== undefined && value !== null)
+          .map(([key, value]) => (
+            <div key={key} style={{ textAlign: 'left', marginBottom: '0.3rem', fontSize: '0.95rem' }}>
+              <span style={{ fontWeight: 600 }}>{fields && fields[key] && fields[key].name ? fields[key].name : key}</span>: {typeof value === 'boolean' ? (value ? '✅' : '⛔') : value}
+            </div>
         ))}
       </div>
     </div>

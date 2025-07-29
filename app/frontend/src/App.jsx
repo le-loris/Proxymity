@@ -1,3 +1,21 @@
+  const handleDelete = () => {
+    if (!editName) return;
+    if (!window.confirm('Delete this service?')) return;
+    fetch(`/api/services/edit/${encodeURIComponent(editName)}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setAddError(data.error);
+        } else {
+          setServices(data.services);
+          setShowPopup(false);
+        }
+      })
+      .catch(() => setAddError('Network error'));
+  };
 import { useEffect, useState } from 'react';
 import ServiceCard from './components/ServiceCard';
 import AddCard from './components/AddCard';
@@ -7,9 +25,11 @@ function App(){
   const [services, setServices] = useState([]);
   const [defaults, setDefaults] = useState({});
   const [fields, setFields] = useState([]);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMode, setPopupMode] = useState('add'); // 'add' ou 'edit'
   const [newService, setNewService] = useState({});
   const [addError, setAddError] = useState("");
+  const [editName, setEditName] = useState("");
 
   useEffect(() => {
     fetch('/api/services')
@@ -24,7 +44,11 @@ function App(){
   }, []);
 
   const handleEdit = (serviceName) => {
-    alert(`Édition du service : ${serviceName}`);
+    setNewService({ name: serviceName, ...services[serviceName] });
+    setEditName(serviceName);
+    setAddError("");
+    setPopupMode('edit');
+    setShowPopup(true);
   };
 
   const handleAdd = () => {
@@ -32,7 +56,8 @@ function App(){
     const initial = { ...defaults, name: "" };
     setNewService(initial);
     setAddError("");
-    setShowAdd(true);
+    setPopupMode('add');
+    setShowPopup(true);
   };
 
   const handleAddChange = (e) => {
@@ -43,27 +68,45 @@ function App(){
     }));
   };
 
-  const handleAddSubmit = (e) => {
+  const handlePopupSubmit = (e) => {
     e.preventDefault();
     if (!newService.name) {
-      setAddError("Le nom est obligatoire");
+      setAddError("Name is required");
       return;
     }
-    fetch('/api/services/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newService)
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          setAddError(data.error);
-        } else {
-          setServices(data.services);
-          setShowAdd(false);
-        }
+    if (popupMode === 'add') {
+      fetch('/api/services/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newService)
       })
-      .catch(() => setAddError("Erreur réseau"));
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setAddError(data.error);
+          } else {
+            setServices(data.services);
+            setShowPopup(false);
+          }
+        })
+        .catch(() => setAddError("Network error"));
+    } else if (popupMode === 'edit') {
+      fetch(`/api/services/edit/${encodeURIComponent(editName)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newService)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setAddError(data.error);
+          } else {
+            setServices(data.services);
+            setShowPopup(false);
+          }
+        })
+        .catch(() => setAddError("Network error"));
+    }
   };
   
   return (
@@ -79,6 +122,7 @@ function App(){
           key={"Defaults"}
           title={"Defaults"}
           data={defaults}
+          fields={fields}
         />
         {Object.entries(services).map(([name, service], index) => (
           <ServiceCard
@@ -86,12 +130,13 @@ function App(){
             title={name}
             data={service}
             onEdit={handleEdit}
+            fields={fields}
           />
         ))}
         <AddCard onClick={handleAdd} />
       </div>
 
-      {showAdd && (
+      {showPopup && (
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
@@ -101,7 +146,7 @@ function App(){
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <form onSubmit={handleAddSubmit} style={{
+          <form onSubmit={handlePopupSubmit} style={{
             background: '#242424',
             borderRadius: 12,
             padding: '2rem',
@@ -112,10 +157,37 @@ function App(){
             gap: '1rem',
             maxWidth: 400
           }}>
-            <h2>Ajouter un service</h2>
-            {Object.entries(fields).map(([field, value]) => (
+            <h2>{popupMode === 'edit' ? 'Edit' : 'Add'} a service</h2>
+            {Object.entries(fields).map(([field, meta]) => (
               <div key={field} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <label htmlFor={field} style={{ fontWeight: 600 }}>{field}</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4em' }}>
+                  <label
+                    htmlFor={field}
+                    style={{ fontWeight: 600 }}
+                  >
+                    {meta.name || field}
+                  </label>
+                  <span
+                    title={meta.description}
+                    style={{
+                      display: 'inline-block',
+                      width: 15,
+                      height: 15,
+                      borderRadius: '50%',
+                      background: '#eee',
+                      color: '#333',
+                      fontWeight: 700,
+                      fontSize: '0.95em',
+                      textAlign: 'center',
+                      lineHeight: '15px',
+                      cursor: 'help',
+                      border: '1px solid #bbb',
+                      marginLeft: 2
+                    }}
+                  >
+                    ?
+                  </span>
+                </div>
                 {typeof defaults[field] === 'boolean' ? (
                   <input
                     type="checkbox"
@@ -132,14 +204,26 @@ function App(){
                     value={newService[field] ?? ''}
                     onChange={handleAddChange}
                     style={{ width: '100%' }}
+                    disabled={popupMode === 'edit' && field === 'name'}
                   />
                 )}
               </div>
             ))}
             <div style={{ color: 'red', minHeight: 20 }}>{addError}</div>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setShowAdd(false)} style={{ background: '#eee', color: '#000' }}>Annuler</button>
-              <button type="submit" style={{ background: '#333', color: '#fff' }}>Ajouter</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {popupMode === 'edit' ? (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  style={{ background: '#d32f2f', color: '#fff', border: 'none', padding: '0.5rem 1.2rem', borderRadius: 6, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Delete
+                </button>
+              ) : <div />}
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="button" onClick={() => setShowPopup(false)} style={{ background: '#eee', color: '#000' }}>Cancel</button>
+                <button type="submit" style={{ background: '#333', color: '#fff' }}>{popupMode === 'edit' ? 'Save' : 'Add'}</button>
+              </div>
             </div>
           </form>
         </div>

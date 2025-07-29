@@ -1,11 +1,42 @@
 {
-    "name": "Fields",
-    "enabled": "If true, the service will be enabled and exported to the proxy.",
-    "manual": "If true, do not generate file, keep existing.",
-    "domain": "Domain name of the service including TLD. If you only use one, only put it in the Defaults field.",
-    "subdomain": "Service will be accessed through 'subdomain.domain'. Only one 'None' subdomain will be permitted per domain and will be acceessed through 'domain'.",
-    "web-port": "Port exposing the web-UI.",
-    "https": "If true, the the service will be accessed with HTTPS protocol.",
-    "model": "If true, the secure template will be used. Else, the service will be assumed to be secured on its own.",
-    "ip": "If provided, this IP will be used to access the service, else 127.0.0.1 will be used."
+  "name": {
+    "name": "Service Name",
+    "description": "Name of the service."
+  },
+  "enabled": {
+    "name": "Enabled",
+    "description": "If true, the service will be enabled and exported to the proxy."
+  },
+  "manual": {
+    "name": "Manual",
+    "description": "If true, do not generate file, keep existing."
+  },
+  "domain": {
+    "name": "Domain name",
+    "description": "Domain name of the service including TLD. If you only use one, only put it in the Defaults field."
+  },
+  "subdomain": {
+    "name": "Subdomain",
+    "description": "Service will be accessed through 'subdomain.domain'. Only one 'None' subdomain will be permitted per domain and will be acceessed through 'domain'."
+  },
+  "web-port": {
+    "name": "Port",
+    "description": "Port exposing the web-UI."
+  },
+  "https": {
+    "name": "HTTPS",
+    "description": "If true, the the service will be accessed with HTTPS protocol."
+  },
+  "model": {
+    "name": "Model",
+    "description": "If true, the secure template will be used. Else, the service will be assumed to be secured on its own."
+  },
+  "ip": {
+    "name": "IP adress",
+    "description": "If provided, this IP will be used to access the service, else 127.0.0.1 will be used."
+  },
+  "port": {
+    "name": "Port",
+    "description": "Port exposed by the service. If not provided, defaults to 80 for HTTP and 443 for HTTPS."
+  }
 }
