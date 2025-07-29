@@ -81,8 +81,7 @@
     "Prowlarr":{
         "subdomain":"prowlarr",
         "model": "Authentik",
-        "port":8050,
-        "group":"RR"
+        "port":8050
     },
     "PyLoad":{
         "subdomain":"pyload",
@@ -92,20 +91,17 @@
     "qBittorrent":{
         "subdomain":"qbit",
         "model": "Authentik",
-        "port":8053,
-        "group":"RR"
+        "port":8053
     },
     "Radarr":{
         "subdomain":"radarr",
         "model": "Authentik",
-        "port":8051,
-        "group":"RR"
+        "port":8051
     },
     "Sonarr":{
         "subdomain":"sonarr",
         "model": "Authentik",
-        "port":8052,
-        "group":"RR"
+        "port":8052
     },
     "Wallos":{
         "subdomain":"wallos",

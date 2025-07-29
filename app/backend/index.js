@@ -63,6 +63,21 @@ app.post('/api/services/edit/:name', (req, res) => {
   });
 });
 
+// Suppression d'un service existant
+app.delete('/api/services/edit/:name', (req, res) => {
+  const { name } = req.params;
+  if (!services[name]) {
+    return res.status(404).json({ error: 'Service not found' });
+  }
+  delete services[name];
+  fs.writeFile(servicesPath, JSON.stringify(services, null, 2), (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error writing file' });
+    }
+    res.json({ success: true, services });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Serveur sur http://localhost:${PORT}`);
 });

@@ -3,7 +3,8 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 COPY app/frontend/ .
-RUN npm install && npm run build
+# Installation de MUI et dépendances avant le build
+RUN npm install @mui/material @emotion/react @emotion/styled @mui/icons-material && npm install && npm run build
 
 # -------- BACKEND --------
 FROM node:20-alpine
