@@ -4,9 +4,10 @@ import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
 
-function AddCard({ onClick }) {
+function AddCard({ onClick, type = 'service' }) {
+  const tooltip = type === 'template' ? 'Add template' : 'Add service';
   return (
-    <Tooltip title="Add service">
+    <Tooltip title={tooltip}>
       <Paper
         elevation={4}
         sx={{
