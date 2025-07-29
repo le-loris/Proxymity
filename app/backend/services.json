@@ -1,0 +1,119 @@
+{
+    "Authentik":{
+        "manual": true,
+        "subdomain":"auth",
+        "web-port":8243,
+        "https": true
+    },
+    "Freebox":{
+        "subdomain":"box",
+        "ip":"192.168.1.254",
+        "https": true
+    },
+    "Code-Server":{
+        "subdomain":"code",
+        "port":8553,
+        "model": "Authentik"
+    },
+    "Flare-Solverr":{
+        "subdomain":"flare",
+        "model": "Authentik",
+        "port":8054,
+        "group":"RR"
+    },
+    "Home Assistant":{
+        "subdomain":"home",
+        "ip":"192.168.1.140",
+        "port":8123
+    },
+    "Homepage":{
+        "subdomain":"",
+        "model": "Authentik",
+        "port":3000
+    },
+    "Jellyfin":{
+        "subdomain":"jellyfin",
+        "port":8920,
+        "https": true
+    },
+    "Jellyseerr":{
+        "subdomain":"jellyseerr",
+        "port":8055
+    },
+    "Kiwix":{
+        "subdomain":"wiki",
+        "model": "Authentik",
+        "port":8585
+    },
+    "Minecraft":{
+        "subdomain":"map",
+        "port":8536
+    },
+    "n8n":{
+        "subdomain":"n8n",
+        "port":5678
+    },
+   "TrueNAS":{
+        "subdomain":"nas",
+        "port":7443,
+        "https":true
+    },
+    "FileBrowser":{
+        "subdomain":"files",
+        "model":"Authentik",
+        "port":8101
+    },
+    "Paperless-NGX":{
+        "subdomain":"paper",
+        "port":8060
+    },
+    "Pi-Hole":{
+        "subdomain":"pihole",
+        "model": "Authentik",
+        "https":true,
+        "port":8543
+    },
+    "Portainer":{
+        "subdomain":"portainer",
+        "port":9443,
+        "https":true
+    },
+    "Prowlarr":{
+        "subdomain":"prowlarr",
+        "model": "Authentik",
+        "port":8050,
+        "group":"RR"
+    },
+    "PyLoad":{
+        "subdomain":"pyload",
+        "model": "Authentik",
+        "port":5900
+    },
+    "qBittorrent":{
+        "subdomain":"qbit",
+        "model": "Authentik",
+        "port":8053,
+        "group":"RR"
+    },
+    "Radarr":{
+        "subdomain":"radarr",
+        "model": "Authentik",
+        "port":8051,
+        "group":"RR"
+    },
+    "Sonarr":{
+        "subdomain":"sonarr",
+        "model": "Authentik",
+        "port":8052,
+        "group":"RR"
+    },
+    "Wallos":{
+        "subdomain":"wallos",
+        "port":8420
+    },
+    "WebDAV":{
+        "subdomain":"archive",
+        "port":"5959/public/",
+        "model": "basic"
+    }
+}
