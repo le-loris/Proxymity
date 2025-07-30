@@ -172,6 +172,12 @@ app.delete('/api/services/edit/:name', (req, res) => {
   });
 });
 
+
+// Fallback SPA : toute route non-API renvoie index.html
+app.get(/^\/(?!api\/).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Serveur sur http://localhost:${PORT}`);
 });

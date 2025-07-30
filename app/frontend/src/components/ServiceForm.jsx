@@ -9,6 +9,8 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 
 function ServiceForm({
@@ -17,6 +19,7 @@ function ServiceForm({
   initialData = {},
   fields = {},
   defaults = {},
+  templates = [],
   onCancel,
   onSubmit,
   onDelete,
@@ -77,6 +80,26 @@ function ServiceForm({
                       }
                       label={meta.name || field}
                     />
+                  </Tooltip>
+                ) : field === 'model' ? (
+                  <Tooltip title={meta.description || ''} placement="right" arrow>
+                    <TextField
+                      select
+                      id={field}
+                      name={field}
+                      label={meta.name || field}
+                      value={form[field] ?? ''}
+                      onChange={handleChange}
+                      fullWidth
+                      size="small"
+                      disabled={loading}
+                      variant="outlined"
+                    >
+                      <MenuItem value=""><em>Choisir un modèle</em></MenuItem>
+                      {templates.map((tpl) => (
+                        <MenuItem key={tpl.name} value={tpl.name}>{tpl.name}</MenuItem>
+                      ))}
+                    </TextField>
                   </Tooltip>
                 ) : (
                   <Tooltip title={meta.description || ''} placement="right" arrow>

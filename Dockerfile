@@ -4,7 +4,7 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY app/frontend/ .
 # Installation de MUI, react-simple-code-editor et prismjs avant le build
-RUN npm install @mui/material @emotion/react @emotion/styled @mui/icons-material react-simple-code-editor prismjs && npm install && npm run build
+RUN npm install @mui/material @emotion/react @emotion/styled @mui/icons-material react-simple-code-editor prismjs react-router-dom && npm install && npm run build
 
 # -------- BACKEND --------
 FROM node:20-alpine

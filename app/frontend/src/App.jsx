@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import ServiceCard from './components/ServiceCard';
 import AddCard from './components/AddCard';
 import ServiceForm from './components/ServiceForm';
@@ -35,9 +36,15 @@ if (typeof document !== 'undefined' && !document.getElementById('inter-font')) {
   document.head.appendChild(link);
 }
 
-function App() {
+function AppContent() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [screen, setScreen] = useState('services'); // 'services' | 'templates' | 'dashboard'
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Déduire l'écran courant depuis l'URL
+  const path = location.pathname;
+  let screen = 'dashboard';
+  if (path.startsWith('/services')) screen = 'services';
+  else if (path.startsWith('/templates')) screen = 'templates';
   const [services, setServices] = useState([]);
   const [defaults, setDefaults] = useState({});
   const [fields, setFields] = useState([]);
@@ -202,19 +209,19 @@ function App() {
       <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <List sx={{ width: 220 }}>
           <ListItem disablePadding>
-            <ListItemButton selected={screen === 'dashboard'} onClick={() => { setScreen('dashboard'); setDrawerOpen(false); }}>
+            <ListItemButton selected={screen === 'dashboard'} onClick={() => { navigate('/'); setDrawerOpen(false); }}>
               <ListItemIcon><DashboardIcon /></ListItemIcon>
               <ListItemText primary="Dashboard" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
-            <ListItemButton selected={screen === 'services'} onClick={() => { setScreen('services'); setDrawerOpen(false); }}>
+            <ListItemButton selected={screen === 'services'} onClick={() => { navigate('/services'); setDrawerOpen(false); }}>
               <ListItemIcon><ViewListIcon /></ListItemIcon>
               <ListItemText primary="Services" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
-            <ListItemButton selected={screen === 'templates'} onClick={() => { setScreen('templates'); setDrawerOpen(false); }}>
+            <ListItemButton selected={screen === 'templates'} onClick={() => { navigate('/templates'); setDrawerOpen(false); }}>
               <ListItemIcon><LayersIcon /></ListItemIcon>
               <ListItemText primary="Templates" />
             </ListItemButton>
@@ -222,91 +229,133 @@ function App() {
         </List>
       </Drawer>
 
-      {/* Main content by screen, avec header fixe */}
+      {/* Main content by route */}
       <div style={{ paddingTop: 72, minHeight: '100vh', boxSizing: 'border-box', background: 'inherit' }}>
-        {screen === 'services' && (
-          <>
-            <div className="card"
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-              }}>
-              <ServiceCard
-                key={"Defaults"}
-                title={"Defaults"}
-                data={defaults}
-                fields={fields}
-              />
-              {Object.entries(services).map(([name, service], index) => (
+        <Routes>
+          <Route path="/services" element={
+            <>
+              <div className="card"
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}>
                 <ServiceCard
-                  key={name}
-                  title={name}
-                  data={service}
-                  onEdit={handleEdit}
+                  key={"Defaults"}
+                  title={"Defaults"}
+                  data={defaults}
                   fields={fields}
                 />
-              ))}
-              <AddCard onClick={handleAdd} type="service" />
-            </div>
+                {Object.entries(services).map(([name, service], index) => (
+                  <ServiceCard
+                    key={name}
+                    title={name}
+                    data={service}
+                    onEdit={handleEdit}
+                    fields={fields}
+                  />
+                ))}
+                <AddCard onClick={handleAdd} type="service" />
+              </div>
 
-            <ServiceForm
-              open={formOpen}
-              mode={formMode}
-              initialData={formData}
-              fields={fields}
-              defaults={defaults}
-              onCancel={() => setFormOpen(false)}
-              onSubmit={handleFormSubmit}
-              onDelete={handleFormDelete}
-              loading={formLoading}
-              error={formError}
-            />
-          </>
-        )}
-        {screen === 'templates' && (
-          <>
-            <div className="card"
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-              }}>
-              {templates.map((tpl) => (
-                <TemplateCard
-                  key={tpl.name}
-                  name={tpl.name}
-                  meta={tpl.meta}
-                  onEdit={() => {
-                    setTemplateFormData({
-                      name: tpl.name,
-                      text: tpl.text,
-                      description: tpl.meta?.description || ''
-                    });
-                    setTemplateFormMode('edit');
-                    setTemplateFormOpen(true);
-                  }}
-                />
-              ))}
-              <AddCard onClick={() => {
-                setTemplateFormData({ name: '', text: '' });
-                setTemplateFormMode('add');
-                setTemplateFormOpen(true);
-              }} type="template" />
-            </div>
-            <TemplateForm
-              open={templateFormOpen}
-              mode={templateFormMode}
-              initialData={templateFormData}
-              onCancel={() => setTemplateFormOpen(false)}
-              onSubmit={(tpl) => {
-                setTemplateFormLoading(true);
-                setTemplateFormError('');
-                if (templateFormMode === 'add') {
-                  fetch('/api/templates/add', {
-                    method: 'POST',
+              <ServiceForm
+                open={formOpen}
+                mode={formMode}
+                initialData={formData}
+                fields={fields}
+                defaults={defaults}
+                templates={templates}
+                onCancel={() => setFormOpen(false)}
+                onSubmit={handleFormSubmit}
+                onDelete={handleFormDelete}
+                loading={formLoading}
+                error={formError}
+              />
+            </>
+          } />
+          <Route path="/templates" element={
+            <>
+              <div className="card"
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}>
+                {templates.map((tpl) => (
+                  <TemplateCard
+                    key={tpl.name}
+                    name={tpl.name}
+                    meta={tpl.meta}
+                    onEdit={() => {
+                      setTemplateFormData({
+                        name: tpl.name,
+                        text: tpl.text,
+                        description: tpl.meta?.description || ''
+                      });
+                      setTemplateFormMode('edit');
+                      setTemplateFormOpen(true);
+                    }}
+                  />
+                ))}
+                <AddCard onClick={() => {
+                  setTemplateFormData({ name: '', text: '' });
+                  setTemplateFormMode('add');
+                  setTemplateFormOpen(true);
+                }} type="template" />
+              </div>
+              <TemplateForm
+                open={templateFormOpen}
+                mode={templateFormMode}
+                initialData={templateFormData}
+                onCancel={() => setTemplateFormOpen(false)}
+                onSubmit={(tpl) => {
+                  setTemplateFormLoading(true);
+                  setTemplateFormError('');
+                  if (templateFormMode === 'add') {
+                    fetch('/api/templates/add', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(tpl)
+                    })
+                      .then(res => res.json())
+                      .then(data => {
+                        if (data.error) {
+                          setTemplateFormError(data.error);
+                        } else {
+                          fetch('/api/templates')
+                            .then(res => res.json())
+                            .then(setTemplates);
+                          setTemplateFormOpen(false);
+                        }
+                      })
+                      .catch(() => setTemplateFormError('Network error'))
+                      .finally(() => setTemplateFormLoading(false));
+                  } else {
+                    fetch(`/api/templates/edit/${encodeURIComponent(tpl.name)}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ text: tpl.text, meta: { description: tpl.description || '' } })
+                    })
+                      .then(res => res.json())
+                      .then(data => {
+                        if (data.error) {
+                          setTemplateFormError(data.error);
+                        } else {
+                          fetch('/api/templates')
+                            .then(res => res.json())
+                            .then(setTemplates);
+                          setTemplateFormOpen(false);
+                        }
+                      })
+                      .catch(() => setTemplateFormError('Network error'))
+                      .finally(() => setTemplateFormLoading(false));
+                  }
+                }}
+                onDelete={(name) => {
+                  setTemplateFormLoading(true);
+                  fetch(`/api/templates/edit/${encodeURIComponent(name)}`, {
+                    method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(tpl)
                   })
                     .then(res => res.json())
                     .then(data => {
@@ -321,60 +370,29 @@ function App() {
                     })
                     .catch(() => setTemplateFormError('Network error'))
                     .finally(() => setTemplateFormLoading(false));
-                } else {
-                  fetch(`/api/templates/edit/${encodeURIComponent(tpl.name)}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: tpl.text, meta: { description: tpl.description || '' } })
-                  })
-                    .then(res => res.json())
-                    .then(data => {
-                      if (data.error) {
-                        setTemplateFormError(data.error);
-                      } else {
-                        fetch('/api/templates')
-                          .then(res => res.json())
-                          .then(setTemplates);
-                        setTemplateFormOpen(false);
-                      }
-                    })
-                    .catch(() => setTemplateFormError('Network error'))
-                    .finally(() => setTemplateFormLoading(false));
-                }
-              }}
-              onDelete={(name) => {
-                setTemplateFormLoading(true);
-                fetch(`/api/templates/edit/${encodeURIComponent(name)}`, {
-                  method: 'DELETE',
-                  headers: { 'Content-Type': 'application/json' },
-                })
-                  .then(res => res.json())
-                  .then(data => {
-                    if (data.error) {
-                      setTemplateFormError(data.error);
-                    } else {
-                      fetch('/api/templates')
-                        .then(res => res.json())
-                        .then(setTemplates);
-                      setTemplateFormOpen(false);
-                    }
-                  })
-                  .catch(() => setTemplateFormError('Network error'))
-                  .finally(() => setTemplateFormLoading(false));
-              }}
-              loading={templateFormLoading}
-              error={templateFormError}
-            />
-          </>
-        )}
-        {screen === 'dashboard' && (
-          <Typography variant="h4" align="center" sx={{ mt: 8, color: 'text.secondary' }}>
-            Dashboard (à venir)
-          </Typography>
-        )}
+                }}
+                loading={templateFormLoading}
+                error={templateFormError}
+              />
+            </>
+          } />
+          <Route path="/" element={
+            <Typography variant="h4" align="center" sx={{ mt: 8, color: 'text.secondary' }}>
+              Dashboard (à venir)
+            </Typography>
+          } />
+        </Routes>
       </div>
     </ThemeProvider>
   );
 }
 
-export default App
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
+
+export default App;

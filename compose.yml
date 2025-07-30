@@ -5,3 +5,12 @@ services:
       - "3000:3000"
     volumes:
       - ./nginx:/app/nginx
+  
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    

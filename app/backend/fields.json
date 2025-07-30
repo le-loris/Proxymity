@@ -28,8 +28,8 @@
     "description": "If true, the the service will be accessed with HTTPS protocol."
   },
   "model": {
-    "name": "Model",
-    "description": "If true, the secure template will be used. Else, the service will be assumed to be secured on its own."
+    "name": "Template",
+    "description": "If filled, the selected template will be used. Else, the service will be assumed to be secured on its own."
   },
   "ip": {
     "name": "IP adress",

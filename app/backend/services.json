@@ -18,8 +18,7 @@
     "Flare-Solverr":{
         "subdomain":"flare",
         "model": "Authentik",
-        "port":8054,
-        "group":"RR"
+        "port":8054
     },
     "Home Assistant":{
         "subdomain":"home",
