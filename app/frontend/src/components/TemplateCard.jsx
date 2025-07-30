@@ -18,7 +18,7 @@ function TemplateCard({ name, meta = {}, onEdit }) {
         display: 'flex',
         flexDirection: 'column',
       }}
-      className="template-card"
+      className="service-card"
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
         <Typography variant="h6" sx={{ fontSize: '1.1rem', m: 0 }}>{name}</Typography>
