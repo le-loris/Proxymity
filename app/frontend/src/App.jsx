@@ -21,6 +21,7 @@ import './App.css';
 import ServicesPage from './pages/ServicesPage';
 import TemplatesPage from './pages/TemplatesPage';
 import DashboardPage from './pages/DashboardPage';
+import NginxStatus from './components/NginxStatus';
 
 function AppContent() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -62,6 +63,7 @@ function AppContent() {
           <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 700, fontFamily: 'Inter, Roboto, Arial, sans-serif' }}>
             Proxymity
           </Typography>
+          <NginxStatus />
         </Toolbar>
       </AppBar>
       <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>

@@ -3,6 +3,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
+
 // Chargement des routes API
 const servicesRouter = require('./routes/services');
 const templatesRouter = require('./routes/templates');
@@ -17,14 +18,13 @@ app.use(bodyParser.json());
 // Sert les fichiers frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-
 // Utilisation des routes API
-
 app.use('/api/services', servicesRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api', metaRouter);
 
+const nginxRouter = require('./routes/nginx');
+app.use('/api/nginx', nginxRouter);
 
 // Fallback SPA : toute route non-API renvoie index.html
 app.get(/^\/(?!api\/).*/, (req, res) => {
