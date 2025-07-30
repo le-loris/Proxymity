@@ -42,10 +42,20 @@ function ServiceForm({
     }));
   };
 
+
+  // Vérifie que tous les champs obligatoires sont remplis
+  const getMissingRequired = () => {
+    return Object.entries(fields)
+      .filter(([key, meta]) => meta.mandatory)
+      .filter(([key]) => !form[key] && form[key] !== false)
+      .map(([key]) => key);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.name) {
-      setLocalError('Name is required');
+    const missing = getMissingRequired();
+    if (missing.length > 0) {
+      setLocalError('Missing required: ' + missing.join(', '));
       return;
     }
     setLocalError('');
@@ -64,60 +74,67 @@ function ServiceForm({
         <DialogTitle>{mode === 'edit' ? 'Edit' : 'Add'} a service</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            {Object.entries(fields).map(([field, meta]) => (
-              <div key={field}>
-                {typeof defaults[field] === 'boolean' ? (
-                  <Tooltip title={meta.description || ''} placement="right" arrow>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          id={field}
-                          name={field}
-                          checked={!!form[field]}
-                          onChange={handleChange}
-                          disabled={loading}
-                        />
-                      }
-                      label={meta.name || field}
-                    />
-                  </Tooltip>
-                ) : field === 'model' ? (
-                  <Tooltip title={meta.description || ''} placement="right" arrow>
-                    <TextField
-                      select
-                      id={field}
-                      name={field}
-                      label={meta.name || field}
-                      value={form[field] ?? ''}
-                      onChange={handleChange}
-                      fullWidth
-                      size="small"
-                      disabled={loading}
-                      variant="outlined"
-                    >
-                      <MenuItem value=""><em>Choisir un modèle</em></MenuItem>
-                      {templates.map((tpl) => (
-                        <MenuItem key={tpl.name} value={tpl.name}>{tpl.name}</MenuItem>
-                      ))}
-                    </TextField>
-                  </Tooltip>
-                ) : (
-                  <Tooltip title={meta.description || ''} placement="right" arrow>
-                    <TextField
-                      id={field}
-                      name={field}
-                      label={meta.name || field}
-                      value={form[field] ?? ''}
-                      onChange={handleChange}
-                      fullWidth
-                      size="small"
-                      disabled={mode === 'edit' && field === 'name' || loading}
-                      variant="outlined"
-                    />
-                  </Tooltip>
-                )}
-              </div>
-            ))}
+            {Object.entries(fields).map(([field, meta]) => {
+              const missing = meta.mandatory && (!form[field] && form[field] !== false);
+              return (
+                <div key={field}>
+                  {typeof defaults[field] === 'boolean' ? (
+                    <Tooltip title={meta.description || ''} placement="right" arrow>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            id={field}
+                            name={field}
+                            checked={!!form[field]}
+                            onChange={handleChange}
+                            disabled={loading}
+                            sx={missing ? { color: 'error.main' } : {}}
+                          />
+                        }
+                        label={meta.name || field}
+                        sx={missing ? { color: 'error.main' } : {}}
+                      />
+                    </Tooltip>
+                  ) : field === 'model' ? (
+                    <Tooltip title={meta.description || ''} placement="right" arrow>
+                      <TextField
+                        select
+                        id={field}
+                        name={field}
+                        label={meta.name || field}
+                        value={form[field] ?? ''}
+                        onChange={handleChange}
+                        fullWidth
+                        size="small"
+                        disabled={loading}
+                        variant="outlined"
+                        error={!!missing}
+                      >
+                        <MenuItem value=""><em>Choisir un modèle</em></MenuItem>
+                        {templates.map((tpl) => (
+                          <MenuItem key={tpl.name} value={tpl.name}>{tpl.name}</MenuItem>
+                        ))}
+                      </TextField>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip title={meta.description || ''} placement="right" arrow>
+                      <TextField
+                        id={field}
+                        name={field}
+                        label={meta.name || field}
+                        value={form[field] ?? ''}
+                        onChange={handleChange}
+                        fullWidth
+                        size="small"
+                        disabled={mode === 'edit' && field === 'name' || loading}
+                        variant="outlined"
+                        error={!!missing}
+                      />
+                    </Tooltip>
+                  )}
+                </div>
+              );
+            })}
             <div style={{ color: 'red', minHeight: 20 }}>{localError || error}</div>
           </Stack>
         </DialogContent>

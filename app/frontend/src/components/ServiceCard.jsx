@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -9,10 +9,10 @@ import BlockIcon from '@mui/icons-material/Block';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 
-function ServiceCard({ title, data, onEdit, fields }) {
-  const [enabled, setEnabled] = useState(true);
-
-  const toggle = () => setEnabled(!enabled);
+function ServiceCard({ title, data, onEdit, onToggleEnabled, fields }) {
+  
+  // enabled : valeur du service ou du default
+  const enabled = typeof data.enabled !== 'undefined' ? data.enabled : (data.DefaultsEnabled ?? true);
 
   if (title === "Fields") return null;
 
@@ -34,20 +34,20 @@ function ServiceCard({ title, data, onEdit, fields }) {
       {/* En-tête */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
         <Typography variant="h6" sx={{ fontSize: '1.1rem', m: 0 }}>{title}</Typography>
-        {title !== "Defaults" && (
           <Stack direction="row" spacing={0.5}>
             <Tooltip title="Edit">
               <IconButton size="small" onClick={() => onEdit?.(title)}>
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+        {title !== "Defaults" && (
             <Tooltip title={enabled ? "Disable" : "Enable"}>
-              <IconButton size="small" onClick={toggle} color={enabled ? 'success' : 'error'}>
+              <IconButton size="small" onClick={e => { e.stopPropagation(); onToggleEnabled?.(title, { ...data, enabled: !enabled }); }} color={enabled ? 'success' : 'error'}>
                 {enabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
-          </Stack>
         )}
+        </Stack>
       </Stack>
 
       {/* Contenu */}

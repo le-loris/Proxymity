@@ -1,11 +1,13 @@
 {
   "name": {
     "name": "Service Name",
-    "description": "Name of the service."
+    "description": "Name of the service.",
+    "required": true
   },
   "enabled": {
     "name": "Enabled",
-    "description": "If true, the service will be enabled and exported to the proxy."
+    "description": "If true, the service will be enabled and exported to the proxy.",
+    "required": true
   },
   "manual": {
     "name": "Manual",
