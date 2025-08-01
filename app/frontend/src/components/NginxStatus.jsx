@@ -36,6 +36,7 @@ export default function NginxStatus() {
     setHover(true);
   };
   const handleMouseLeave = () => {
+    return;
     setHover(false);
     setAnchorEl(null);
   };
@@ -78,18 +79,22 @@ export default function NginxStatus() {
         onClose={handleMouseLeave}
         anchorOrigin={{
           vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
           horizontal: 'left',
         }}
         PaperProps={{
-          sx: { px: 1, py: 0.5, borderRadius: 2 },
+          sx: { px: 1, py: 1, borderRadius: 2, minWidth: 120, mt: 1},
         }}
         disableRestoreFocus
       >
-        <Stack direction="row" spacing={1}>
-          <Button variant="contained" size="small" color="primary">
+        <Stack spacing={1}>
+          <Button variant="outlined" size="small" color="primary">
             Set up
           </Button>
-          <Button variant="outlined" size="small" color="primary">
+          <Button variant="contained" size="small" color="primary">
             Export
           </Button>
         </Stack>
