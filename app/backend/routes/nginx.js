@@ -4,17 +4,66 @@ const router = express.Router();
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
+// Stockage temporaire du container de référence (en mémoire)
+let referenceContainerName = null;
+let referenceAction = 'default';
+let referenceWebhookUrl = '';
+
 // GET /api/nginx/status
 router.get('/status', async (req, res) => {
   try {
     const containers = await docker.listContainers({ all: true });
-    const nginx = containers.find(c =>
-      (c.Names && c.Names.some(name => name.replace(/^\//, '') === 'proxymity-nginx')) ||
-      (c.Names && c.Names.some(name => name.endsWith('/proxymity-nginx')))
-    );
-    res.json({ running: !!(nginx && nginx.State === 'running') });
+    let refName = referenceContainerName;
+    let refContainer = null;
+    if (refName) {
+      refContainer = containers.find(c => c.Names && c.Names.some(name => name.replace(/^\//, '') === refName));
+    }
+    if (!refContainer) {
+      // Choix par défaut : premier container contenant 'nginx' dans le nom
+      refContainer = containers.find(c => c.Names && c.Names.some(name => name.includes('nginx')));
+      refName = refContainer ? refContainer.Names[0].replace(/^\//, '') : null;
+    }
+    let status = '?';
+    let color = 'warning';
+    if (refContainer) {
+      if (refContainer.State === 'running') {
+        status = 'running';
+        color = 'success';
+      } else {
+        status = refContainer.State;
+        color = 'error';
+      }
+    }
+    res.json({
+      running: status === 'running',
+      status,
+      color,
+      containerName: refName || '?',
+      action: referenceAction || 'default',
+      webhookUrl: referenceWebhookUrl || ''
+    });
   } catch (e) {
-    res.status(500).json({ running: false, error: e.message });
+    res.status(500).json({ running: false, status: '?', color: 'warning', containerName: '?', action: referenceAction || 'default', error: e.message });
+  }
+});
+
+// POST /api/nginx/reference
+router.post('/reference', async (req, res) => {
+  const { containerName, action, webhookUrl } = req.body;
+  if (!containerName) return res.status(400).json({ error: 'containerName required' });
+  referenceContainerName = containerName;
+  referenceAction = action || 'default';
+  referenceWebhookUrl = webhookUrl || '';
+  res.json({ success: true, containerName, action: referenceAction, webhookUrl: referenceWebhookUrl });
+});
+
+// GET /api/nginx/containers
+router.get('/containers', async (req, res) => {
+  try {
+    const containers = await docker.listContainers({ all: true });
+    res.json({ containers });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

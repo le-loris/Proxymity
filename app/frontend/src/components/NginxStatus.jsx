@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import SetupNginxDialog from './SetupNginxDialog';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
@@ -10,23 +11,24 @@ import Button from '@mui/material/Button';
 async function fetchNginxStatus() {
   try {
     const res = await fetch('/api/nginx/status');
-    if (!res.ok) return false;
+    if (!res.ok) return { running: false, status: '?', color: 'warning', containerName: '?' };
     const data = await res.json();
-    return data.running;
+    return data;
   } catch {
-    return false;
+    return { running: false, status: '?', color: 'warning', containerName: '?' };
   }
 }
 
 export default function NginxStatus() {
-  const [running, setRunning] = useState(false);
+  const [nginx, setNginx] = useState({ running: false, status: '?', color: 'warning', containerName: '?' });
   const [anchorEl, setAnchorEl] = useState(null);
   const [hover, setHover] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   useEffect(() => {
-    fetchNginxStatus().then(setRunning);
+    fetchNginxStatus().then(setNginx);
     const interval = setInterval(() => {
-      fetchNginxStatus().then(setRunning);
+      fetchNginxStatus().then(setNginx);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -36,7 +38,6 @@ export default function NginxStatus() {
     setHover(true);
   };
   const handleMouseLeave = () => {
-    return;
     setHover(false);
     setAnchorEl(null);
   };
@@ -59,9 +60,9 @@ export default function NginxStatus() {
           borderRadius: 2,
           background: 'rgba(255,255,255,0.07)',
           border: '1px solid',
-          borderColor: running ? 'success.main' : 'error.main',
+          borderColor: `${nginx.color}.main`,
           ml: 2,
-          minWidth: 90,
+          minWidth: 120,
           cursor: 'pointer',
         }}
       >
@@ -69,7 +70,10 @@ export default function NginxStatus() {
           <Typography variant="subtitle2" sx={{ fontWeight: 600, letterSpacing: 1 }}>
             NGINX
           </Typography>
-          <CircleIcon sx={{ color: running ? 'success.main' : 'error.main', fontSize: 18 }} />
+          <CircleIcon sx={{ color: `${nginx.color}.main`, fontSize: 18 }} />
+          <Typography variant="caption" sx={{ ml: 1, color: `${nginx.color}.main`, fontWeight: 500 }}>
+            {nginx.containerName}
+          </Typography>
         </Stack>
       </Paper>
 
@@ -83,7 +87,7 @@ export default function NginxStatus() {
         }}
         transformOrigin={{
           vertical: 'top',
-          horizontal: 'left',
+          horizontal: 'center',
         }}
         PaperProps={{
           sx: { px: 1, py: 1, borderRadius: 2, minWidth: 120, mt: 1},
@@ -91,7 +95,7 @@ export default function NginxStatus() {
         disableRestoreFocus
       >
         <Stack spacing={1}>
-          <Button variant="outlined" size="small" color="primary">
+          <Button variant="outlined" size="small" color="primary" onClick={() => setSetupOpen(true)}>
             Set up
           </Button>
           <Button variant="contained" size="small" color="primary">
@@ -99,6 +103,15 @@ export default function NginxStatus() {
           </Button>
         </Stack>
       </Popover>
+    <SetupNginxDialog open={setupOpen} onClose={() => setSetupOpen(false)} onSelect={async (containerName, action, webhookUrl) => {
+      await fetch('/api/nginx/reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ containerName, action, webhookUrl })
+      });
+      setSetupOpen(false);
+      fetchNginxStatus().then(setNginx);
+    }} />
     </div>
   );
 }
