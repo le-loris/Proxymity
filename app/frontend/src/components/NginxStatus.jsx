@@ -22,7 +22,6 @@ async function fetchNginxStatus() {
 export default function NginxStatus() {
   const [nginx, setNginx] = useState({ running: false, status: '?', color: 'warning', containerName: '?' });
   const [anchorEl, setAnchorEl] = useState(null);
-  const [hover, setHover] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
 
   useEffect(() => {
@@ -33,23 +32,20 @@ export default function NginxStatus() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleMouseEnter = (event) => {
-    setAnchorEl(event.currentTarget);
-    setHover(true);
-  };
-  const handleMouseLeave = () => {
-    setHover(false);
-    setAnchorEl(null);
+  const handleClick = (event) => {
+    // open popover on click; if already open, close it
+    if (anchorEl) setAnchorEl(null);
+    else setAnchorEl(event.currentTarget);
   };
 
-  const open = Boolean(anchorEl && hover);
+  const open = Boolean(anchorEl);
 
   return (
     <div
     style={{ display: 'inline-block' }}
     >
       <Paper
-        onMouseEnter={handleMouseEnter}
+        onClick={handleClick}
         elevation={0}
         sx={{
           display: 'inline-flex',
@@ -65,7 +61,7 @@ export default function NginxStatus() {
           cursor: 'pointer',
         }}
         >
-        <Stack direction="row" alignItems="center" spacing={1} onMouseLeave={handleMouseLeave}>
+        <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, letterSpacing: 1 }}>
             NGINX
           </Typography>
@@ -79,7 +75,7 @@ export default function NginxStatus() {
       <Popover
         open={open}
         anchorEl={anchorEl}
-        onClose={handleMouseLeave}
+        onClose={() => setAnchorEl(null)}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'center',
@@ -94,7 +90,10 @@ export default function NginxStatus() {
         disableRestoreFocus
       >
         <Stack spacing={1}>
-          <Button variant="outlined" size="small" color="primary" onClick={() => setSetupOpen(true)}>
+          <Button variant="outlined" size="small" color="primary" onClick={() => {
+            setSetupOpen(true);
+            setAnchorEl(null);
+          }}>
             Set up
           </Button>
           <Button variant="contained" size="small" color="primary">
