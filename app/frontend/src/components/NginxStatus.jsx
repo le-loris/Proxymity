@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 // API backend pour l'état du conteneur nginx
 async function fetchNginxStatus() {
   try {
-    const res = await fetch('/api/nginx/status');
+    const res = await fetch('/api/settings/status');
     if (!res.ok) return { running: false, status: '?', color: 'warning', containerName: '?' };
     const data = await res.json();
     return data;
@@ -46,11 +46,10 @@ export default function NginxStatus() {
 
   return (
     <div
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      style={{ display: 'inline-block' }}
+    style={{ display: 'inline-block' }}
     >
       <Paper
+        onMouseEnter={handleMouseEnter}
         elevation={0}
         sx={{
           display: 'inline-flex',
@@ -65,8 +64,8 @@ export default function NginxStatus() {
           minWidth: 120,
           cursor: 'pointer',
         }}
-      >
-        <Stack direction="row" alignItems="center" spacing={1}>
+        >
+        <Stack direction="row" alignItems="center" spacing={1} onMouseLeave={handleMouseLeave}>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, letterSpacing: 1 }}>
             NGINX
           </Typography>
@@ -104,7 +103,7 @@ export default function NginxStatus() {
         </Stack>
       </Popover>
     <SetupNginxDialog open={setupOpen} onClose={() => setSetupOpen(false)} onSelect={async (containerName, action, webhookUrl) => {
-      await fetch('/api/nginx/reference', {
+      await fetch('/api/settings/reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ containerName, action, webhookUrl })

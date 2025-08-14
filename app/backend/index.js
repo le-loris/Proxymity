@@ -23,8 +23,8 @@ app.use('/api/services', servicesRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api', metaRouter);
 
-const nginxRouter = require('./routes/nginx');
-app.use('/api/nginx', nginxRouter);
+const settingsRouter = require('./routes/settings');
+app.use('/api/settings', settingsRouter);
 
 // Fallback SPA : toute route non-API renvoie index.html
 app.get(/^\/(?!api\/).*/, (req, res) => {

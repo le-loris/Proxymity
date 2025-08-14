@@ -8,8 +8,10 @@ const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 let referenceContainerName = null;
 let referenceAction = 'default';
 let referenceWebhookUrl = '';
+let notifierEnabled = false;
+let notifierApiKey = '';
 
-// GET /api/nginx/status
+// GET /api/settings/status
 router.get('/status', async (req, res) => {
   try {
     const containers = await docker.listContainers({ all: true });
@@ -40,14 +42,16 @@ router.get('/status', async (req, res) => {
       color,
       containerName: refName || '?',
       action: referenceAction || 'default',
-      webhookUrl: referenceWebhookUrl || ''
+      webhookUrl: referenceWebhookUrl || '',
+      notifierEnabled: !!notifierEnabled,
+      notifierApiKey: notifierApiKey || ''
     });
   } catch (e) {
     res.status(500).json({ running: false, status: '?', color: 'warning', containerName: '?', action: referenceAction || 'default', error: e.message });
   }
 });
 
-// POST /api/nginx/reference
+// POST /api/settings/reference
 router.post('/reference', async (req, res) => {
   const { containerName, action, webhookUrl } = req.body;
   if (!containerName) return res.status(400).json({ error: 'containerName required' });
@@ -57,7 +61,20 @@ router.post('/reference', async (req, res) => {
   res.json({ success: true, containerName, action: referenceAction, webhookUrl: referenceWebhookUrl });
 });
 
-// GET /api/nginx/containers
+// POST /api/settings/save
++router.post('/save', async (req, res) => {
+  const { containerName, action, webhookUrl, notifier } = req.body || {};
+  if (containerName) referenceContainerName = containerName;
+  if (action) referenceAction = action;
+  if (webhookUrl !== undefined) referenceWebhookUrl = webhookUrl;
+  if (notifier) {
+    notifierEnabled = !!notifier.enabled;
+    notifierApiKey = notifier.apiKey || '';
+  }
+  res.json({ success: true, containerName: referenceContainerName, action: referenceAction, webhookUrl: referenceWebhookUrl, notifierEnabled, notifierApiKey: notifierEnabled ? '***' : '' });
+});
+
+// GET /api/settings/containers
 router.get('/containers', async (req, res) => {
   try {
     const containers = await docker.listContainers({ all: true });
