@@ -18,9 +18,15 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
+import IconButton from '@mui/material/IconButton';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
 
 export default function SetupNginxDialog({ open, onClose, onSelect }) {
   const [containers, setContainers] = useState([]);
@@ -73,9 +79,7 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       }),
     })
       .then(res => {
-        if (res.ok) {
-          alert('Test notification sent successfully!');
-        } else {
+        if (!res.ok) {
           alert('Failed to send test notification.');
         }
       })
@@ -109,10 +113,17 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       <DialogTitle>Setup Proxymity</DialogTitle>
       <DialogContent>
         <Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            Select the NGINX Container
-          </Typography>
-          <TableContainer component={Paper}>
+          <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+            <Tooltip title="Select the NGINX container to use as reference. Click a row to choose the active container." placement="right">
+              <IconButton size="small" aria-label="help select container">
+                <InfoOutlined fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mr: 1 }}>
+              Select the NGINX Container
+            </Typography>
+          </Box>
+           <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow sx={{ borderBottom: 2, borderColor: 'divider' }}>
@@ -131,7 +142,19 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>{container.Names?.[0]?.replace(/^\//, '') || container.Id}</TableCell>
-                    <TableCell>{container.State}</TableCell>
+                    <TableCell>
+                      <Tooltip title={container.State || 'unknown'} placement="right">
+                        {container.State === 'running' ? (
+                          <CheckCircleIcon sx={{ color: 'green' }} fontSize="small" />
+                        ) : container.State === 'paused' ? (
+                          <PauseCircleOutlineIcon sx={{ color: 'orange' }} fontSize="small" />
+                        ) : container.State === 'exited' || container.State === 'created' ? (
+                          <ErrorOutlineIcon sx={{ color: 'red' }} fontSize="small" />
+                        ) : (
+                          <HelpOutlineIcon fontSize="small" />
+                        )}
+                      </Tooltip>
+                    </TableCell>
                     <TableCell>{container.Image}</TableCell>
                   </TableRow>
                 ))}
@@ -140,10 +163,17 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
           </TableContainer>
         </Box>
         <Box mt={3}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            Action
-          </Typography>
-          <FormControl fullWidth>
+          <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+            <Tooltip title="Choose how to export the configuration. Select 'Webhook' to send the config to an external automation (requires the Webhook URL below)." placement="right">
+              <IconButton size="small" aria-label="help action">
+                <InfoOutlined fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mr: 1 }}>
+              Action
+            </Typography>
+          </Box>
+           <FormControl fullWidth>
             <InputLabel id="nginx-action-label">Export mode</InputLabel>
             <Select
               labelId="nginx-action-label"
@@ -151,12 +181,8 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
               label="Export mode"
               onChange={e => setAction(e.target.value)}
             >
-              <Tooltip title="Export standard, configuration locale ou fichier.">
                 <MenuItem value="default">Default</MenuItem>
-              </Tooltip>
-              <Tooltip title="Envoie la configuration vers un webhook n8n (automatisation externe).">
                 <MenuItem value="webhook">Webhook (n8n)</MenuItem>
-              </Tooltip>
             </Select>
           </FormControl>
         </Box>
@@ -175,9 +201,16 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
         <Box mt={3}>
           <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
             <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Notifier
-              </Typography>
+              <Box display="flex" alignItems="center">
+                <Tooltip title="Enable Pushbullet notifier and provide your Pushbullet Access Token (API Key) in the field below." placement="right">
+                  <IconButton size="small" aria-label="help notifier">
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mr: 1 }}>
+                  Notifier
+                </Typography>
+              </Box>
               <Switch
                 checked={notifierEnabled}
                 onChange={(e) => setNotifierEnabled(e.target.checked)}

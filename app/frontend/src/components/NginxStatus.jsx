@@ -108,7 +108,7 @@ export default function NginxStatus() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ containerName, action, webhookUrl })
       });
-      setSetupOpen(false);
+      //setSetupOpen(false);
       fetchNginxStatus().then(setNginx);
     }} />
     </div>
