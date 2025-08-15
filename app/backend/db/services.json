@@ -6,12 +6,6 @@
         "https": true,
         "enabled": true
     },
-    "Freebox":{
-        "subdomain":"box",
-        "ip":"192.168.1.254",
-        "https": true,
-        "enabled": true
-    },
     "Code-Server":{
         "subdomain":"code",
         "port":8553,
@@ -26,7 +20,7 @@
     },
     "Home Assistant":{
         "subdomain":"home",
-        "ip":"192.168.1.140",
+        "ip":"192.168.1.175",
         "port":8123,
         "enabled": true
     },
