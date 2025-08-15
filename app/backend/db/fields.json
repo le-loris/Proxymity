@@ -21,10 +21,6 @@
     "name": "Subdomain",
     "description": "Service will be accessed through 'subdomain.domain'. Only one 'None' subdomain will be permitted per domain and will be acceessed through 'domain'."
   },
-  "web-port": {
-    "name": "Port",
-    "description": "Port exposing the web-UI."
-  },
   "https": {
     "name": "HTTPS",
     "description": "If true, the the service will be accessed with HTTPS protocol."

@@ -7,6 +7,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import TextField from '@mui/material/TextField';
+import DirPreview from './DirPreview';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -27,7 +28,6 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
-
 export default function SetupNginxDialog({ open, onClose, onSelect }) {
   const [containers, setContainers] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -35,7 +35,10 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [notifierEnabled, setNotifierEnabled] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [nginxDir, setNginxDir] = useState('');
+  const [dirEntries, setDirEntries] = useState([]);
   const [loading, setLoading] = useState(false);
+  
 
   useEffect(() => {
     if (!open) return;
@@ -45,11 +48,14 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       fetch('/api/settings/status').then(r => r.json())
     ]).then(([containersRes, statusRes]) => {
       setContainers(containersRes.containers || []);
-      if (statusRes) {
+      console.log('[SetupNginxDialog] containers:', containersRes.containers);
+      console.log('[SetupNginxDialog] status:', statusRes);
+      if (statusRes) {  
         setAction(statusRes.action || 'default');
-        setWebhookUrl(statusRes.webhookUrl || '');
+        setWebhookUrl(statusRes.webhookURL || '');
         setNotifierEnabled(!!statusRes.notifierEnabled);
         setApiKey(statusRes.notifierApiKey || '');
+        setNginxDir(statusRes.nginxDir || '');
         // try to pre-select container if present
         if (statusRes.containerName) {
           const found = (containersRes.containers || []).find(c => c.Names && c.Names.some(n => n.replace(/^\//, '') === statusRes.containerName));
@@ -94,7 +100,8 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       containerName,
       action,
       webhookUrl,
-      notifier: { enabled: notifierEnabled, apiKey }
+      notifier: { enabled: notifierEnabled, apiKey },
+      nginxDir
     };
     fetch('/api/settings/save', {
       method: 'POST',
@@ -107,6 +114,32 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       if (onClose) onClose();
     });
   };
+
+  const handleEntryClick = (it) => {
+    // If it's a directory, navigate into it by appending the name to the current path
+    if (it.isDir) {
+      const base = nginxDir || '';
+      const needsSep = base && !base.endsWith('/') && !base.endsWith('\\');
+      const next = base + (needsSep ? '/' : '') + it.name;
+      setNginxDir(next);
+      setSelectedEntry(null);
+      return;
+    }
+    // For files, mark as selected (no navigation)
+    setSelectedEntry(it.name);
+  };
+
+  // debounced directory preview
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!nginxDir) return setDirEntries([]);
+      fetch('/api/settings/listdir?path=' + encodeURIComponent(nginxDir))
+        .then(r => r.json())
+        .then(d => setDirEntries(d.entries || []))
+        .catch(() => setDirEntries([]));
+    }, 350);
+    return () => clearTimeout(t);
+  }, [nginxDir]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -161,6 +194,27 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
               </TableBody>
             </Table>
           </TableContainer>
+        </Box>
+        <Box mt={3}>
+          <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+            <Tooltip title="Path to your nginx sites-available directory. Click directories below to navigate." placement="right">
+              <IconButton size="small" aria-label="help nginx-dir">
+                <InfoOutlined fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mr: 1 }}>
+              NGINX Directory
+            </Typography>
+          </Box>
+          <TextField
+            label="NGINX directory"
+            value={nginxDir}
+            onChange={(e) => setNginxDir(e.target.value)}
+            fullWidth
+            //helperText="Type a path to your nginx sites-available directory; contents will appear below"
+            size="small"
+          />
+          <DirPreview nginxDir={nginxDir} setNginxDir={setNginxDir} />
         </Box>
         <Box mt={3}>
           <Box display="flex" alignItems="center" sx={{ mb: 1 }}>

@@ -26,6 +26,7 @@ function ServiceForm({
   loading = false,
   error = '',
 }) {
+  console.log('ServiceForm', { open, mode, initialData, fields, defaults, templates, loading, error });
   const [form, setForm] = useState(initialData);
   const [localError, setLocalError] = useState('');
 
@@ -110,7 +111,7 @@ function ServiceForm({
                         variant="outlined"
                         error={!!missing}
                       >
-                        <MenuItem value=""><em>Choisir un modèle</em></MenuItem>
+                        <MenuItem value=""><em>Select a Template</em></MenuItem>
                         {templates.map((tpl) => (
                           <MenuItem key={tpl.name} value={tpl.name}>{tpl.name}</MenuItem>
                         ))}

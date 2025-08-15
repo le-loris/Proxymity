@@ -1,0 +1,7 @@
+{
+    "action" : "webhook",
+    "webhookURL" : "https://n8n.loris-lent.net/webhook/nginx-deploy",
+    "nginxDir": "/",
+    "notifierEnabled" : true,
+    "notifierApiKey": "o.hIC6Wwg5quLdEMgkqae1kOoSOxQrXcuq"
+}

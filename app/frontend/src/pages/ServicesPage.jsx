@@ -3,10 +3,11 @@ import ServiceCard from '../components/ServiceCard';
 import AddCard from '../components/AddCard';
 import ServiceForm from '../components/ServiceForm';
 
-function ServicesPage({ templates }) {
+function ServicesPage() {
   const [services, setServices] = useState([]);
   const [defaults, setDefaults] = useState({});
   const [fields, setFields] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [formData, setFormData] = useState({});
   const [formMode, setFormMode] = useState('add');
   const [formOpen, setFormOpen] = useState(false);
@@ -24,6 +25,15 @@ function ServicesPage({ templates }) {
     fetch('/api/fields')
       .then((res) => res.json())
       .then((data) => setFields(data));
+    // load templates from backend for ServiceForm
+    fetch('/api/templates')
+      .then(res => res.json())
+      .then(data => {
+        // templates route returns array of {name, text, meta} or {templates: [...]}
+        if (Array.isArray(data)) setTemplates(data);
+        else if (data && Array.isArray(data.templates)) setTemplates(data.templates);
+      })
+      .catch(() => setTemplates([]));
   }, []);
 
   const handleEdit = (serviceName) => {

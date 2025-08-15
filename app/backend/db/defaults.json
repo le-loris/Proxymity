@@ -3,6 +3,6 @@
     "manual": false,
     "ip": "127.0.0.1",
     "domain": "yourdomain.tld",
-    "model": "insecure",
+    "model": "Insecure",
     "https": false
 }

@@ -11,8 +11,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 COPY app/backend/ .
-# Install backend dependencies including dockerode
-RUN npm install dockerode && npm install
+# Install backend dependencies declared in app/backend/package.json (includes archiver and dockerode)
+RUN npm install
 
 # Copy frontend build to backend public folder
 COPY --from=frontend-builder /app/frontend/dist /app/public

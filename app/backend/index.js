@@ -8,6 +8,8 @@ const fs = require('fs');
 const servicesRouter = require('./routes/services');
 const templatesRouter = require('./routes/templates');
 const metaRouter = require('./routes/meta');
+const settingsRouter = require('./routes/settings');
+const exportRouter = require('./routes/export');
 
 const app = express();
 const PORT = 3000;
@@ -22,9 +24,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/services', servicesRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api', metaRouter);
-
-const settingsRouter = require('./routes/settings');
 app.use('/api/settings', settingsRouter);
+app.use('/api/export', exportRouter);
+
 
 // Fallback SPA : toute route non-API renvoie index.html
 app.get(/^\/(?!api\/).*/, (req, res) => {
