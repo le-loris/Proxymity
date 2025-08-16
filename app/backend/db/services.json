@@ -1,23 +1,4 @@
 {
-    "Authentik":{
-        "manual": true,
-        "subdomain":"auth",
-        "web-port":8243,
-        "https": true,
-        "enabled": true
-    },
-    "Code-Server":{
-        "subdomain":"code",
-        "port":8553,
-        "model": "Authentik",
-        "enabled": true
-    },
-    "Flare-Solverr":{
-        "subdomain":"flare",
-        "model": "Authentik",
-        "port":8054,
-        "enabled": true
-    },
     "Home Assistant":{
         "subdomain":"home",
         "ip":"192.168.1.175",
@@ -26,7 +7,6 @@
     },
     "Homepage":{
         "subdomain":"",
-        "model": "Authentik",
         "port":3000,
         "enabled": true
     },
@@ -36,96 +16,15 @@
         "https": true,
         "enabled": true
     },
-    "Jellyseerr":{
-        "subdomain":"jellyseerr",
-        "port":8055,
-        "enabled": true
-    },
-    "Kiwix":{
-        "subdomain":"wiki",
-        "model": "Authentik",
-        "port":8585,
-        "enabled": true
-    },
-    "Minecraft":{
-        "subdomain":"map",
-        "port":8536,
-        "enabled": true
-    },
     "n8n":{
         "subdomain":"n8n",
         "port":5678,
-        "enabled": true
-    },
-   "TrueNAS":{
-        "subdomain":"nas",
-        "port":7443,
-        "https":true,
-        "enabled": true
-    },
-    "FileBrowser":{
-        "subdomain":"files",
-        "model":"Authentik",
-        "port":8101,
-        "enabled": true
-    },
-    "Paperless-NGX":{
-        "subdomain":"paper",
-        "port":8060,
-        "enabled": true
-    },
-    "Pi-Hole":{
-        "subdomain":"pihole",
-        "model": "Authentik",
-        "https":true,
-        "port":8543,
         "enabled": true
     },
     "Portainer":{
         "subdomain":"portainer",
         "port":9443,
         "https":true,
-        "enabled": true
-    },
-    "Prowlarr":{
-        "subdomain":"prowlarr",
-        "model": "Authentik",
-        "port":8050,
-        "enabled": true
-    },
-    "PyLoad":{
-        "subdomain":"pyload",
-        "model": "Authentik",
-        "port":5900,
-        "enabled": true
-    },
-    "qBittorrent":{
-        "subdomain":"qbit",
-        "model": "Authentik",
-        "port":8053,
-        "enabled": true
-    },
-    "Radarr":{
-        "subdomain":"radarr",
-        "model": "Authentik",
-        "port":8051,
-        "enabled": true
-    },
-    "Sonarr":{
-        "subdomain":"sonarr",
-        "model": "Authentik",
-        "port":8052,
-        "enabled": true
-    },
-    "Wallos":{
-        "subdomain":"wallos",
-        "port":8420,
-        "enabled": true
-    },
-    "WebDAV":{
-        "subdomain":"archive",
-        "port":"5959/public/",
-        "model": "basic",
         "enabled": true
     }
 }

@@ -1,14 +1,13 @@
 services:
   proxymity:
     container_name: proxymity-server
-    image: le-loris/proxymity:latest
+    build: .
     ports:
       - "3000:3000"
     volumes:
       - ./nginx:/app/nginx
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
-
+  
   nginx:
     container_name: proxymity-nginx
     image: nginx:latest
@@ -17,4 +16,4 @@ services:
       - "8443:8443"
     volumes:
       - ./nginx:/etc/nginx/conf.d
-    restart: unless-stopped
+    
