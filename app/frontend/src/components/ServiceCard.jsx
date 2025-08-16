@@ -1,79 +1,67 @@
-import { useState } from 'react';
 
-function ServiceCard({ title, data, onEdit }) {
-  const [enabled, setEnabled] = useState(true);
+import { useState, useEffect } from 'react';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BlockIcon from '@mui/icons-material/Block';
+import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 
-  const toggle = () => setEnabled(!enabled);
+function ServiceCard({ title, data, onEdit, onToggleEnabled, fields }) {
+  
+  // enabled : valeur du service ou du default
+  const enabled = typeof data.enabled !== 'undefined' ? data.enabled : (data.DefaultsEnabled ?? true);
 
   if (title === "Fields") return null;
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      border: '1px solid #ddd',
-      borderRadius: '12px',
-      backgroundColor: '#fff',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-      color: '#333',
-      opacity: enabled ? 1 : 0.6,
-      minWidth: '250px',
-      maxWidth: '300px',
-      flex: '1 1 300px',
-    }}>
-      {/* En-tête */}
-      <div style={{
-        backgroundColor: '#f0f0f0',
-        padding: '0.5rem 1rem',
-        borderTopLeftRadius: '12px',
-        borderTopRightRadius: '12px',
+    <Paper
+      elevation={4}
+      sx={{
+        opacity: enabled ? 1 : 0.6,
+        minWidth: 260,
+        maxWidth: 340,
+        margin: 2,
+        borderRadius: 2,
+        backgroundColor: 'background.paper',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid #ddd',
-      }}>
-        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{title}</h3>
-        <div style={{ display: 'flex', gap: '0.3rem' }}>
-          <button
-            onClick={() => onEdit?.(title)}
-            title="Modifier"
-            style={{
-              background: '#eee',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '0.25rem 0.5rem',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-            }}
-          >
-            ✏️
-          </button>
-          <button
-            onClick={toggle}
-            title={enabled ? "Désactiver" : "Activer"}
-            style={{
-              background: enabled ? '#cce5cc' : '#f8d7da',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '0.25rem 0.5rem',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-            }}
-          >
-            {enabled ? '✅' : '⛔'}
-          </button>
-        </div>
-      </div>
+        flexDirection: 'column',
+      }}
+      className="service-card"
+    >
+      {/* En-tête */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+        <Typography variant="h6" sx={{ fontSize: '1.1rem', m: 0 }}>{title}</Typography>
+          <Stack direction="row" spacing={0.5}>
+            <Tooltip title="Edit">
+              <IconButton size="small" onClick={() => onEdit?.(title)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+        {title !== "Defaults" && (
+            <Tooltip title={enabled ? "Disable" : "Enable"}>
+              <IconButton size="small" onClick={e => { e.stopPropagation(); onToggleEnabled?.(title, { ...data, enabled: !enabled }); }} color={enabled ? 'success' : 'error'}>
+                {enabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+        )}
+        </Stack>
+      </Stack>
 
       {/* Contenu */}
-      <div style={{ padding: '1rem' }}>
-        {Object.entries(data).map(([key, value]) => (
-          <div key={key} style={{ textAlign: 'left', marginBottom: '0.3rem', fontSize: '0.95rem' }}>
-            <span style={{ fontWeight: 600 }}>{key}</span>: {value}
-          </div>
+      <Stack sx={{ px: 2, py: 1 }}>
+        {Object.entries(data)
+          .filter(([key]) => key !== 'name' && key !== 'enabled')
+          .filter(([key, value]) => value !== "" && value !== undefined && value !== null)
+          .map(([key, value]) => (
+            <Typography key={key} sx={{ textAlign: 'left', mb: 0.5, fontSize: '0.95rem' }}>
+              <span style={{ fontWeight: 600 }}>{fields && fields[key] && fields[key].name ? fields[key].name : key}</span>: {typeof value === 'boolean' ? (value ? <CheckCircleIcon color="success" fontSize="inherit" sx={{ verticalAlign: 'middle' }} /> : <BlockIcon color="error" fontSize="inherit" sx={{ verticalAlign: 'middle' }} />) : value}
+            </Typography>
         ))}
-      </div>
-    </div>
+      </Stack>  
+    </Paper>
   );
 }
 

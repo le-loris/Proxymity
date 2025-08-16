@@ -1,8 +1,20 @@
 services:
   proxymity:
+    container_name: proxymity-server
     build: .
     ports:
       - "3000:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./nginx:/app/nginx
+      - /var/run/docker.sock:/var/run/docker.sock
+  
+  nginx:
+    container_name: proxymity-nginx
+    image: nginx:latest
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    

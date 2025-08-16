@@ -1,0 +1,30 @@
+{
+    "Home Assistant":{
+        "subdomain":"home",
+        "ip":"192.168.1.175",
+        "port":8123,
+        "enabled": true
+    },
+    "Homepage":{
+        "subdomain":"",
+        "port":3000,
+        "enabled": true
+    },
+    "Jellyfin":{
+        "subdomain":"jellyfin",
+        "port":8920,
+        "https": true,
+        "enabled": true
+    },
+    "n8n":{
+        "subdomain":"n8n",
+        "port":5678,
+        "enabled": true
+    },
+    "Portainer":{
+        "subdomain":"portainer",
+        "port":9443,
+        "https":true,
+        "enabled": true
+    }
+}

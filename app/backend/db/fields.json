@@ -1,0 +1,40 @@
+{
+  "name": {
+    "name": "Service Name",
+    "description": "Name of the service.",
+    "required": true
+  },
+  "enabled": {
+    "name": "Enabled",
+    "description": "If true, the service will be enabled and exported to the proxy.",
+    "required": true
+  },
+  "manual": {
+    "name": "Manual",
+    "description": "If true, do not generate file, keep existing."
+  },
+  "domain": {
+    "name": "Domain name",
+    "description": "Domain name of the service including TLD. If you only use one, only put it in the Defaults field."
+  },
+  "subdomain": {
+    "name": "Subdomain",
+    "description": "Service will be accessed through 'subdomain.domain'. Only one 'None' subdomain will be permitted per domain and will be acceessed through 'domain'."
+  },
+  "https": {
+    "name": "HTTPS",
+    "description": "If true, the the service will be accessed with HTTPS protocol."
+  },
+  "model": {
+    "name": "Template",
+    "description": "If filled, the selected template will be used. Else, the service will be assumed to be secured on its own."
+  },
+  "ip": {
+    "name": "IP adress",
+    "description": "If provided, this IP will be used to access the service, else 127.0.0.1 will be used."
+  },
+  "port": {
+    "name": "Port",
+    "description": "Port exposed by the service. If not provided, defaults to 80 for HTTP and 443 for HTTPS."
+  }
+}

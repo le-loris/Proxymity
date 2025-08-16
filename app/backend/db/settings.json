@@ -1,0 +1,7 @@
+{
+    "action" : "default",
+    "webhookURL" : "",
+    "nginxDir": "/",
+    "notifierEnabled" : false,
+    "notifierApiKey": ""
+}

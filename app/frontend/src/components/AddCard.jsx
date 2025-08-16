@@ -1,25 +1,35 @@
-function AddCard({ onClick }) {
+
+import Paper from '@mui/material/Paper';
+import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
+import Tooltip from '@mui/material/Tooltip';
+
+function AddCard({ onClick, type = 'service' }) {
+  const tooltip = type === 'template' ? 'Add template' : 'Add service';
   return (
-    <div
-      onClick={onClick}
-      style={{
-        minWidth: '250px',
-        maxWidth: '300px',
-        flex: '1 1 300px',
-        border: '2px dashed #aaa',
-        borderRadius: '12px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        color: '#666',
-        fontSize: '2rem',
-        backgroundColor: '#fafafa',
-        transition: 'background-color 0.2s',
-      }}
-    >
-      +
-    </div>
+    <Tooltip title={tooltip}>
+      <Paper
+        elevation={4}
+        sx={{
+          minWidth: 80,
+          minHeight: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 2,
+          margin: 2,
+          cursor: 'pointer',
+          backgroundColor: 'background.paper',
+          transition: 'background-color 0.2s',
+        }}
+        className="add-card"
+        onClick={onClick}
+      >
+        <IconButton color="primary" size="large">
+          <AddIcon fontSize="large" />
+        </IconButton>
+      </Paper>
+    </Tooltip>
   );
 }
 
