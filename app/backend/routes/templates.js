@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const router = express.Router();
 
-const templatesDir = path.join(__dirname, '..', 'templates');
+const templatesDir = path.join(__dirname, '..', 'db', 'templates');
 const templatesJsonPath = path.join(__dirname, '..', 'db', 'templates.json');
 let templatesMeta = {};
 try {

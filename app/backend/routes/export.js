@@ -7,7 +7,7 @@ const https = require('https');
 const { URL } = require('url');
 
 const SETTINGS_PATH = path.join(__dirname, '..', 'db', 'settings.json');
-const generator = require(path.join(__dirname, '..', 'generator'));
+const generator = require(path.join(__dirname, 'generator'));
 const Docker = require('dockerode');
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
@@ -74,7 +74,7 @@ async function runDefaultExport() {
   const configJson = path.join(__dirname, '..', 'db', 'services.json');
   const templatesJson = path.join(__dirname, '..', 'db', 'templates.json');
   const defaultsJson = path.join(__dirname, '..', 'db', 'defaults.json');
-  const templateDir = path.join(__dirname, '..', 'templates');
+  const templateDir = path.join(__dirname, '..', 'db', 'templates');
   // Use nginxDir from settings as root for output and archive when available
   const settings = getSettings();
   const nginxRoot = (settings && settings.nginxDir) ? settings.nginxDir : path.join(__dirname, '..');

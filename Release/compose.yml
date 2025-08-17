@@ -5,6 +5,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
+      - ./db:/app/backend/db  # Persistent path to your database files
       - ./nginx:/app/nginx  # Path to your NGINX configuration files
       - /var/run/docker.sock:/var/run/docker.sock # Required for Docker API access
     restart: unless-stopped

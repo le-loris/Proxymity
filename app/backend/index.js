@@ -4,6 +4,10 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
 
+// Synchronisation des fichiers de configuration par défaut
+const utils = require('./routes/utils');
+utils.syncDbDefaults();
+
 // Chargement des routes API
 const servicesRouter = require('./routes/services');
 const templatesRouter = require('./routes/templates');
