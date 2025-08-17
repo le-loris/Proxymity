@@ -1,29 +1,26 @@
-# -------- FRONTEND --------
-FROM node:20-alpine AS frontend-builder
-
+# -------- FRONTEND BUILD --------
+FROM node:22-alpine AS frontend-builder
 WORKDIR /app/frontend
-COPY app/frontend/ .
-# Installation de MUI, react-simple-code-editor et prismjs avant le build
-RUN npm install @mui/material @emotion/react @emotion/styled @mui/icons-material react-simple-code-editor prismjs react-router-dom && npm install && npm run build
+COPY app/frontend/package*.json ./
+RUN npm install
+COPY app/frontend/ ./
+RUN npm run build
 
-# -------- BACKEND --------
-FROM node:20-alpine
-
+# -------- BACKEND BUILD --------
+FROM node:22-alpine
 WORKDIR /app
 
-# Installe docker-cli (et bash si tu veux faire des scripts)
-RUN apk add --no-cache docker-cli bash
-
-# Backend install
+# Install backend dependencies
 COPY app/backend/package*.json ./backend/
 WORKDIR /app/backend
 RUN npm install
-COPY app/backend/ .
-# Install backend dependencies declared in app/backend/package.json (includes archiver and dockerode)
-RUN npm install
 
-# Frontend build copié dans /public
-COPY --from=frontend-builder /app/frontend/dist ./public
+# Copy backend source
+COPY app/backend/ /app/backend/
+
+# Copy frontend build output to /app/frontend/dist
+COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 EXPOSE 3000
+WORKDIR /app/backend
 CMD ["node", "index.js"]

@@ -1,0 +1,19 @@
+services:
+  proxymity:
+    container_name: proxymity-server
+    image: lorislent/proxymity:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./nginx:/app/nginx  # Path to your NGINX configuration files
+      - /var/run/docker.sock:/var/run/docker.sock # Required for Docker API access
+    restart: unless-stopped
+
+# Optionnal: If you  do not already have NGINX installed.
+  nginx:
+    container_name: proxymity-nginx
+    image: nginx:latest
+    network_mode: host
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    restart: always

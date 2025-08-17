@@ -5,8 +5,9 @@ const fs = require('fs');
 const router = express.Router();
 
 const servicesPath = path.join(__dirname, '..', 'db', 'services.json');
-const defaults = require(path.join(__dirname, '..', 'db', 'defaults.json'));
+const defaultsPath = path.join(__dirname, '..', 'db', 'defaults.json');
 const fields = require(path.join(__dirname, '..', 'db', 'fields.json'));
+let defaults = require(defaultsPath);
 let services = require(servicesPath);
 
 // Liste tous les services
@@ -42,6 +43,19 @@ router.post('/add', (req, res) => {
 // Edition d'un service
 router.post('/edit/:name', (req, res) => {
   const { name } = req.params;
+  // If editing Defaults, write defaults.json instead
+  if (name === 'Defaults') {
+    try {
+      const body = req.body || {};
+      // remove name if present
+      if (body.name) delete body.name;
+      fs.writeFileSync(defaultsPath, JSON.stringify(body, null, 2), 'utf8');
+      return res.json({ success: true, services, defaults: body });
+    } catch (e) {
+      return res.status(500).json({ error: 'Erreur lors de l\'écriture des defaults' });
+    }
+  }
+
   if (!services[name]) {
     return res.status(404).json({ error: 'Service non trouvé' });
   }
@@ -57,6 +71,9 @@ router.post('/edit/:name', (req, res) => {
 // Suppression d'un service
 router.delete('/edit/:name', (req, res) => {
   const { name } = req.params;
+  if (name === 'Defaults') {
+    return res.status(400).json({ error: 'Cannot delete Defaults' });
+  }
   if (!services[name]) {
     return res.status(404).json({ error: 'Service not found' });
   }

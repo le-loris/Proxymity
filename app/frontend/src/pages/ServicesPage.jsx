@@ -37,7 +37,11 @@ function ServicesPage() {
   }, []);
 
   const handleEdit = (serviceName) => {
-    setFormData({ name: serviceName, ...services[serviceName] });
+    let serviceData = services[serviceName];
+    if (serviceName === 'Defaults') {
+      serviceData = { ...defaults };
+    }
+    setFormData({ name: serviceName, ...serviceData });
     setEditName(serviceName);
     setFormError("");
     setFormMode('edit');
@@ -83,7 +87,12 @@ function ServicesPage() {
           if (data.error) {
             setFormError(data.error);
           } else {
-            setServices(data.services);
+            // If we edited Defaults, backend returns the updated defaults in data.defaults
+            if (editName === 'Defaults' && data.defaults) {
+              setDefaults(data.defaults);
+            }
+            // Update services list if present
+            if (data.services) setServices(data.services);
             setFormOpen(false);
           }
         })
@@ -95,6 +104,12 @@ function ServicesPage() {
   const handleFormDelete = (name) => {
     setFormLoading(true);
     setFormError("");
+    if (name === 'Defaults') {
+      // prevent deletion of defaults
+      setFormError('Cannot delete Defaults');
+      setFormLoading(false);
+      return;
+    }
     fetch(`/api/services/edit/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -124,6 +139,7 @@ function ServicesPage() {
           key={"Defaults"}
           title={"Defaults"}
           data={defaults}
+          onEdit={handleEdit}
           fields={fields}
         />
         {Object.entries(services).map(([name, service], index) => (
@@ -159,6 +175,7 @@ function ServicesPage() {
         onCancel={() => setFormOpen(false)}
         onSubmit={handleFormSubmit}
         onDelete={handleFormDelete}
+        allowDelete={formData.name !== 'Defaults'}
         loading={formLoading}
         error={formError}
       />

@@ -5,8 +5,11 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+
 const SETTINGS_PATH = path.join(__dirname, '..', 'db', 'settings.json');
 const generator = require(path.join(__dirname, '..', 'generator'));
+const Docker = require('dockerode');
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 function httpRequest(urlStr, { method = 'GET', headers = {}, body = null, timeout = 10000 } = {}) {
   return new Promise((resolve, reject) => {
@@ -81,7 +84,38 @@ async function runDefaultExport() {
   // generator.execute signature: (configJson, templatesJson, defaultsJson, templateDir, archiveDir, outputDir)
   await generator.execute(configJson, templatesJson, defaultsJson, templateDir, archiveDir, outputDir);
   const files = fs.existsSync(outputDir) ? fs.readdirSync(outputDir).filter(f => f.endsWith('.conf')) : [];
-  return { generated: files.length, files };
+  return { generated: files.length, files, outputDir };
+}
+
+// Test nginx config and restart container if valid
+async function testAndRestartNginx(containerName) {
+  if (!containerName) {
+    return { nginxTest: 'No containerName set in settings.', nginxRestarted: false };
+  }
+  try {
+    const container = docker.getContainer(containerName);
+    // Run nginx -t inside the container
+    const exec = await container.exec({
+      Cmd: ['nginx', '-t'],
+      AttachStdout: true,
+      AttachStderr: true
+    });
+    const stream = await exec.start({ hijack: true, stdin: false });
+    let output = '';
+    await new Promise((resolve, reject) => {
+      stream.on('data', (chunk) => { output += chunk.toString(); });
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+    if (/syntax is ok/i.test(output) && /test is successful/i.test(output)) {
+      await container.restart();
+      return { nginxTest: output, nginxRestarted: true };
+    } else {
+      return { nginxTest: output, nginxRestarted: false };
+    }
+  } catch (nginxErr) {
+    return { nginxTest: 'Error: ' + (nginxErr.message || nginxErr), nginxRestarted: false };
+  }
 }
 
 async function callWebhook(url, config) {
@@ -131,7 +165,13 @@ router.post('/launch', async (req, res) => {
     } else {
       // default: run the generator to produce .conf files (delegated to helper)
       try {
-        result.default = await runDefaultExport();
+        const exportRes = await runDefaultExport();
+        result.default = exportRes;
+        // Step: test nginx config and restart container if valid
+        const { nginxTest, nginxRestarted } = await testAndRestartNginx(settings.containerName);
+        result.nginxTest = nginxTest;
+        result.nginxRestarted = nginxRestarted;
+        console.log('[export] nginx test result', nginxTest, 'restarted:', nginxRestarted);
       } catch (genErr) {
         console.error('[export] generator error', genErr);
         throw genErr;

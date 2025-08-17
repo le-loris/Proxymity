@@ -17,8 +17,6 @@ const PORT = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Sert les fichiers frontend
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Utilisation des routes API
 app.use('/api/services', servicesRouter);
@@ -28,9 +26,12 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/export', exportRouter);
 
 
+// Sert les fichiers frontend
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
 // Fallback SPA : toute route non-API renvoie index.html
 app.get(/^\/(?!api\/).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
 app.listen(PORT, () => {

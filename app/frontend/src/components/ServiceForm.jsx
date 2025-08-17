@@ -23,6 +23,7 @@ function ServiceForm({
   onCancel,
   onSubmit,
   onDelete,
+  allowDelete = true,
   loading = false,
   error = '',
 }) {
@@ -140,7 +141,7 @@ function ServiceForm({
           </Stack>
         </DialogContent>
         <DialogActions>
-          {mode === 'edit' && (
+          {mode === 'edit' && allowDelete && (
             <Button
               onClick={handleDelete}
               color="error"
