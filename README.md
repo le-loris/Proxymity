@@ -39,7 +39,7 @@ Export flow (what happens when you trigger an export)
 - If Export Mode is `Default`: the backend runs the generator which:
   - Loads the services manifest and templates metadata.
   - Merges in defaults (if provided).
-  - Archives existing `.conf` files in `sites-availables-backup` and writes new `.conf` files into `sites-availables` under the configured NGINX directory.
+  - Archives existing `.conf` files in `sites-available-backup` and writes new `.conf` files into `sites-available` under the configured NGINX directory.
   - Skips services marked `manual` or those without a model/template.
 
 Minimal run instructions

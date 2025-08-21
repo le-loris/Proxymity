@@ -78,8 +78,8 @@ async function runDefaultExport() {
   // Use nginxDir from settings as root for output and archive when available
   const settings = getSettings();
   const nginxRoot = (settings && settings.nginxDir) ? settings.nginxDir : path.join(__dirname, '..');
-  const archiveDir = path.join(nginxRoot, 'sites-availables-backup');
-  const outputDir = path.join(nginxRoot, 'sites-availables');
+  const archiveDir = path.join(nginxRoot, 'sites-available-backup');
+  const outputDir = path.join(nginxRoot, 'sites-available');
 
   // generator.execute signature: (configJson, templatesJson, defaultsJson, templateDir, archiveDir, outputDir)
   await generator.execute(configJson, templatesJson, defaultsJson, templateDir, archiveDir, outputDir);
