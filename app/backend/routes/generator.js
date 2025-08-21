@@ -8,7 +8,17 @@ function loadConfig(jsonFile) {
 }
 
 function mergeDefaults(defaults, serviceData) {
-  return Object.assign({}, defaults, serviceData);
+  const result = { ...defaults };
+  for (const key of Object.keys(serviceData)) {
+    const val = serviceData[key];
+    // If value is null, undefined, or empty string, use default
+    if (val === undefined || val === null || val === '') {
+      // keep default
+    } else {
+      result[key] = val;
+    }
+  }
+  return result;
 }
 
 function generateNginxConfig(serviceName, config, templateDir, templatesMeta) {
@@ -94,6 +104,11 @@ async function execute(configJson, templatesJson, defaultsJson, templateDir, arc
 
     for (const [serviceName, serviceData] of Object.entries(configData)) {
         const manual = (typeof serviceData.manual !== 'undefined') ? serviceData.manual : (defaults && defaults.manual);
+        const enabled = (typeof serviceData.enabled !== 'undefined') ? serviceData.enabled : (defaults && defaults.enabled);
+        if (!enabled) {
+          console.log(`${serviceName} is not enabled. Skipping.`);
+          continue;
+        }
         if (manual) {
             console.log(`${serviceName} is marked as manual. Skipping.`);
             continue;

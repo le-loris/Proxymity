@@ -55,45 +55,26 @@ function TemplatesPage() {
         onSubmit={(tpl) => {
           setTemplateFormLoading(true);
           setTemplateFormError('');
-          if (templateFormMode === 'add') {
-            fetch('/api/templates/add', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(tpl)
+          console.log('[TemplatesPage] onSubmit:', tpl, 'mode:', templateFormMode);
+          const ifName = templateFormMode === 'edit' ? `/${encodeURIComponent(tpl.name)}` : '';
+          fetch(`/api/templates/${templateFormMode}${ifName}`, {
+            method:'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tpl)
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.error) {
+                setTemplateFormError(data.error);
+              } else {
+                fetch('/api/templates')
+                  .then(res => res.json())
+                  .then(setTemplates);
+                setTemplateFormOpen(false);
+              }
             })
-              .then(res => res.json())
-              .then(data => {
-                if (data.error) {
-                  setTemplateFormError(data.error);
-                } else {
-                  fetch('/api/templates')
-                    .then(res => res.json())
-                    .then(setTemplates);
-                  setTemplateFormOpen(false);
-                }
-              })
-              .catch(() => setTemplateFormError('Network error'))
-              .finally(() => setTemplateFormLoading(false));
-          } else {
-            fetch(`/api/templates/edit/${encodeURIComponent(tpl.name)}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: tpl.text, meta: { description: tpl.description || '' } })
-            })
-              .then(res => res.json())
-              .then(data => {
-                if (data.error) {
-                  setTemplateFormError(data.error);
-                } else {
-                  fetch('/api/templates')
-                    .then(res => res.json())
-                    .then(setTemplates);
-                  setTemplateFormOpen(false);
-                }
-              })
-              .catch(() => setTemplateFormError('Network error'))
-              .finally(() => setTemplateFormLoading(false));
-          }
+            .catch(() => setTemplateFormError('Network error'))
+            .finally(() => setTemplateFormLoading(false));
         }}
         onDelete={(name) => {
           setTemplateFormLoading(true);

@@ -156,8 +156,8 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
               Select the NGINX Container
             </Typography>
           </Box>
-           <TableContainer component={Paper}>
-            <Table>
+           <TableContainer component={Paper} sx={{ maxHeight: 220, overflowY: 'auto' }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ borderBottom: 2, borderColor: 'divider' }}>
                   <TableCell sx={{ fontWeight: 'bold', fontSize: 17, borderBottom: 3, borderColor: 'divider' }}>Name</TableCell>
