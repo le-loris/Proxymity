@@ -204,7 +204,39 @@ router.post('/launch', async (req, res) => {
   }
 });
 
-router.get('/export/state', (req, res) => {
+const LAST_EXPORTS_LIMIT = 5;
+let lastExports = [];
+
+function recordExport(result) {
+  lastExports.unshift({
+    date: new Date().toISOString(),
+    result
+  });
+  if (lastExports.length > LAST_EXPORTS_LIMIT) {
+    lastExports = lastExports.slice(0, LAST_EXPORTS_LIMIT);
+  }
+}
+
+// Patch the /launch route to record exports
+const originalLaunch = router.stack.find(r => r.route && r.route.path === '/launch');
+if (originalLaunch) {
+  const origHandler = originalLaunch.route.stack[0].handle;
+  originalLaunch.route.stack[0].handle = async (req, res, next) => {
+    // Intercept res.json to record export result
+    const origJson = res.json.bind(res);
+    res.json = (data) => {
+      if (data.success) recordExport(data);
+      return origJson(data);
+    };
+    return origHandler(req, res, next);
+  };
+}
+
+router.get('/last', (req, res) => {
+  res.json(lastExports);
+});
+
+router.get('/state', (req, res) => {
   res.json(exportState);
 });
 

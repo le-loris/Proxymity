@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const ACTIVITY_LOG_PATH = path.join(__dirname, '..', 'db', 'activity.log');
 
 function syncDbDefaults() {
   const dbDefaultDir = path.join(__dirname, '..', 'db-default');
@@ -37,4 +38,20 @@ function syncDbDefaults() {
   });
 }
 
-module.exports = { syncDbDefaults };
+function logActivity({ type, target, name, details, result }) {
+  const entry = {
+    timestamp: new Date().toISOString(),
+    type,
+    target,
+    name,
+    details,
+    result
+  };
+  try {
+    fs.appendFileSync(ACTIVITY_LOG_PATH, JSON.stringify(entry) + '\n', 'utf8');
+  } catch (e) {
+    console.error('[logActivity] Failed to write log:', e);
+  }
+}
+
+module.exports = { syncDbDefaults, logActivity, ACTIVITY_LOG_PATH };
