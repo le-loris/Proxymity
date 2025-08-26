@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const router = express.Router();
+const { logActivity } = require('./utils');
 
 const templatesDir = path.join(__dirname, '..', 'db', 'templates');
 const templatesJsonPath = path.join(__dirname, '..', 'db', 'templates.json');
@@ -47,6 +48,7 @@ router.post('/add', (req, res) => {
     templatesMeta[name] = meta;
     fs.writeFile(templatesJsonPath, JSON.stringify(templatesMeta, null, 2), (err2) => {
       if (err2) return res.status(500).json({ error: 'Erreur écriture templates.json' });
+      logActivity({ type: 'template', target: 'add', name, details: { meta }, result: { success: true } });
       res.json({ success: true });
     });
   });
@@ -73,10 +75,16 @@ router.post('/edit/:name', (req, res) => {
   if (doText) {
     fs.writeFile(filePath, text, (err) => {
       if (err) return res.status(500).json({ error: 'Erreur écriture template' });
-      updateMeta(() => res.json({ success: true }));
+      updateMeta(() => {
+        logActivity({ type: 'template', target: 'edit', name, details: { meta, text }, result: { success: true } });
+        res.json({ success: true });
+      });
     });
   } else {
-    updateMeta(() => res.json({ success: true }));
+    updateMeta(() => {
+      logActivity({ type: 'template', target: 'edit', name, details: { meta }, result: { success: true } });
+      res.json({ success: true });
+    });
   }
 });
 
@@ -90,6 +98,7 @@ router.delete('/edit/:name', (req, res) => {
     delete templatesMeta[name];
     fs.writeFile(templatesJsonPath, JSON.stringify(templatesMeta, null, 2), (err2) => {
       if (err2) return res.status(500).json({ error: 'Erreur écriture templates.json' });
+      logActivity({ type: 'template', target: 'delete', name, details: {}, result: { success: true } });
       res.json({ success: true });
     });
   });

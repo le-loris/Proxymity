@@ -6,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import CircleIcon from '@mui/icons-material/Circle';
 import Popover from '@mui/material/Popover';
 import Button from '@mui/material/Button';
+import ExportButton from './ExportButton';
 
 // API backend pour l'état du conteneur nginx
 async function fetchNginxStatus() {
@@ -23,7 +24,6 @@ export default function NginxStatus() {
   const [nginx, setNginx] = useState({ running: false, status: '?', color: 'warning', containerName: '?' });
   const [anchorEl, setAnchorEl] = useState(null);
   const [setupOpen, setSetupOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchNginxStatus().then(setNginx);
@@ -40,31 +40,6 @@ export default function NginxStatus() {
   };
 
   const open = Boolean(anchorEl);
-
-  async function callExportAPI() {
-    setExporting(true);
-    try {
-      // send minimal payload (container name) so backend may use it if needed
-      console.log('[frontend] export: starting', nginx.containerName);
-      const res = await fetch('/api/export/launch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ containerName: nginx.containerName })
-      });
-      console.log('[frontend] export: request sent, response=', res.status);
-      const data = await res.json();
-      console.log('[frontend] export: response data=', data);
-      if (!res.ok) {
-        alert('Export failed: ' + (data.error || res.statusText));
-      }
-    } catch (e) {
-      alert('Export error: ' + e.message);
-    } finally {
-      setExporting(false);
-      setAnchorEl(null);
-      console.log('[frontend] export: finished');
-    }
-  }
   
   return (
     <div
@@ -119,9 +94,7 @@ export default function NginxStatus() {
           <Button variant="outlined" size="small" color="primary" onClick={() => { setSetupOpen(true); setAnchorEl(null); }}>
             Set up
           </Button>
-          <Button variant="contained" size="small" color="primary" disabled={exporting} onClick={callExportAPI}>
-            {exporting ? 'Exporting…' : 'Export'}
-          </Button>
+          <ExportButton text="Export" size="small" containerName={nginx.containerName} />
         </Stack>
       </Popover>
     <SetupNginxDialog open={setupOpen} onClose={() => setSetupOpen(false)} onSelect={async (containerName, action, webhookUrl) => {

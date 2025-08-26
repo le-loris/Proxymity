@@ -3,8 +3,8 @@ set -e
 
 USER_ID=${UID:-1000}
 GROUP_ID=${GID:-1000}
-APP_USER=appuser
-APP_GROUP=appuser
+APP_USER=proxymity
+APP_GROUP=proxymity
 
 echo "[Entrypoint] Script started: UID=$USER_ID, GID=$GROUP_ID, USER=$APP_USER, GROUP=$APP_GROUP"
 
@@ -31,6 +31,7 @@ fi
 
 # Change ownership of relevant directories (optional, adjust as needed)
 chown -R $USER_ID:$GROUP_ID /app/backend/db
+chown -R $USER_ID:$GROUP_ID /app/nginx
 
 # Run the given command as the new user
 exec su-exec $APP_USER "$@"

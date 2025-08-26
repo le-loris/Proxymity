@@ -61,7 +61,9 @@ function AppContent() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 700, fontFamily: 'Inter, Roboto, Arial, sans-serif' }}>
-            Proxymity
+            {screen === 'dashboard' && 'Proxymity - Dashboard'}
+            {screen === 'services' && 'Proxymity - Services'}
+            {screen === 'templates' && 'Proxymity - Templates'}
           </Typography>
           <NginxStatus />
         </Toolbar>
@@ -90,7 +92,7 @@ function AppContent() {
       </Drawer>
 
       {/* Main content by route */}
-      <div style={{ paddingTop: 72, minHeight: '100vh', boxSizing: 'border-box', background: 'inherit' }}>
+      <div style={{ paddingTop: 72, boxSizing: 'border-box', background: 'inherit' }}>
         <Routes>
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/templates" element={<TemplatesPage />} />

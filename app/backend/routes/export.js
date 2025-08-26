@@ -10,6 +10,7 @@ const SETTINGS_PATH = path.join(__dirname, '..', 'db', 'settings.json');
 const generator = require(path.join(__dirname, 'generator'));
 const Docker = require('dockerode');
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+const { logActivity } = require('./utils');
 
 function httpRequest(urlStr, { method = 'GET', headers = {}, body = null, timeout = 10000 } = {}) {
   return new Promise((resolve, reject) => {
@@ -160,6 +161,13 @@ router.post('/launch', async (req, res) => {
     if (settings.action === 'webhook' && settings.webhookURL) {
       console.log('[export] calling webhook', settings.webhookURL);
       const webhookRes = await callWebhook(settings.webhookURL, config);
+      logActivity({
+        type: 'export',
+        target: 'webhook',
+        name: settings.webhookURL,
+        details: { config },
+        result: webhookRes
+      });
       console.log('[export] webhook response', webhookRes);
       result.webhook = webhookRes;
     } else {
@@ -167,12 +175,33 @@ router.post('/launch', async (req, res) => {
       try {
         const exportRes = await runDefaultExport();
         result.default = exportRes;
+        logActivity({
+          type: 'export',
+          target: 'generator',
+          name: 'runDefaultExport',
+          details: {},
+          result: exportRes
+        });
         // Step: test nginx config and restart container if valid
         const { nginxTest, nginxRestarted } = await testAndRestartNginx(settings.containerName);
         result.nginxTest = nginxTest;
         result.nginxRestarted = nginxRestarted;
+        logActivity({
+          type: 'nginx',
+          target: 'container',
+          name: settings.containerName,
+          details: { test: nginxTest },
+          result: { restarted: nginxRestarted }
+        });
         console.log('[export] nginx test result', nginxTest, 'restarted:', nginxRestarted);
       } catch (genErr) {
+        logActivity({
+          type: 'error',
+          target: 'generator',
+          name: 'runDefaultExport',
+          details: {},
+          result: { error: genErr.message || String(genErr) }
+        });
         console.error('[export] generator error', genErr);
         throw genErr;
       }
@@ -188,9 +217,23 @@ router.post('/launch', async (req, res) => {
           'Proxymity Export',
           'Export completed successfully.'
         );
+        logActivity({
+          type: 'notification',
+          target: 'pushbullet',
+          name: 'Export completed',
+          details: {},
+          result: notifRes
+        });
         console.log('[export] notification response', notifRes);
         result.notification = 'Notification sent';
       } catch (notifErr) {
+        logActivity({
+          type: 'error',
+          target: 'pushbullet',
+          name: 'Export notification',
+          details: {},
+          result: { error: notifErr.message || String(notifErr) }
+        });
         console.error('[export] notification failed', notifErr);
         result.notification = 'Notification failed: ' + notifErr.message;
       }
@@ -199,41 +242,31 @@ router.post('/launch', async (req, res) => {
   } catch (e) {
     exportState.status = 'error';
     exportState.lastError = e.stack || e.message || String(e);
+    logActivity({
+      type: 'error',
+      target: 'export',
+      name: 'launch',
+      details: {},
+      result: { error: exportState.lastError }
+    });
     console.error('[export] error during export', exportState.lastError);
     res.status(500).json({ success: false, error: e.message || String(e) });
   }
 });
 
-const LAST_EXPORTS_LIMIT = 5;
-let lastExports = [];
-
-function recordExport(result) {
-  lastExports.unshift({
-    date: new Date().toISOString(),
-    result
-  });
-  if (lastExports.length > LAST_EXPORTS_LIMIT) {
-    lastExports = lastExports.slice(0, LAST_EXPORTS_LIMIT);
-  }
-}
-
-// Patch the /launch route to record exports
-const originalLaunch = router.stack.find(r => r.route && r.route.path === '/launch');
-if (originalLaunch) {
-  const origHandler = originalLaunch.route.stack[0].handle;
-  originalLaunch.route.stack[0].handle = async (req, res, next) => {
-    // Intercept res.json to record export result
-    const origJson = res.json.bind(res);
-    res.json = (data) => {
-      if (data.success) recordExport(data);
-      return origJson(data);
-    };
-    return origHandler(req, res, next);
-  };
-}
-
+const ACTIVITY_LOG_PATH = path.join(__dirname, '..', 'db', 'activity.log');
 router.get('/last', (req, res) => {
-  res.json(lastExports);
+  try {
+    if (!fs.existsSync(ACTIVITY_LOG_PATH)) return res.json([]);
+    const lines = fs.readFileSync(ACTIVITY_LOG_PATH, 'utf8').split('\n').filter(Boolean);
+    const events = lines.map(line => {
+      try { return JSON.parse(line); } catch { return null; }
+    }).filter(e => e && e.type === 'export');
+    // Return most recent 5 export events, newest first
+    res.json(events.reverse().slice(0, 5));
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to read export events' });
+  }
 });
 
 router.get('/state', (req, res) => {

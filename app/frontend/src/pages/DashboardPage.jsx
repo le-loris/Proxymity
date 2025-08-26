@@ -1,25 +1,72 @@
 import React, { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography, Box, CircularProgress, Button, Stack, Divider, Alert } from '@mui/material';
-import { Power, PowerOff, CheckCircleOutline, ErrorOutline, RocketLaunch, AddCircleOutline, History } from '@mui/icons-material';
+import { Power, PowerOff, AddCircleOutline, History } from '@mui/icons-material';
+import ExportButton from '../components/ExportButton';
 
-// Une petite fonction pour formater les dates proprement
+// Date formatting function
 const formatDate = (isoString) => {
-  if (!isoString) return "Jamais";
-  return new Date(isoString).toLocaleString('fr-FR', {
+  if (!isoString) return "Never";
+  return new Date(isoString).toLocaleString('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
 };
 
+const dashboardCardStyle = {
+  minWidth: 260,
+  maxWidth: 340,
+  // minHeight: 260,
+  // maxHeight: 260,
+  height: 260,
+  display: 'flex',
+  flexDirection: 'column',
+  margin: 2,
+  borderRadius: 2,
+  border: '1px solid white',
+};
+
+function getActivityMessage(item) {
+  // Compose a readable message based on type, target, name, and details
+  switch (item.type) {
+    case 'service':
+      if (item.target === 'add') return `Service "${item.name}" was added.`;
+      if (item.target === 'edit') return `Service "${item.name}" was edited.`;
+      if (item.target === 'delete') return `Service "${item.name}" was deleted.`;
+      break;
+    case 'template':
+      if (item.target === 'add') return `Template "${item.name}" was added.`;
+      if (item.target === 'edit') return `Template "${item.name}" was edited.`;
+      if (item.target === 'delete') return `Template "${item.name}" was deleted.`;
+      break;
+    case 'export':
+      if (item.target === 'webhook') return `Export triggered via webhook (${item.name}).`;
+      if (item.target === 'generator') return `Exported configuration files.`;
+      break;
+    case 'nginx':
+      if (item.target === 'container') return `NGINX container "${item.name}" tested${item.result?.restarted ? ' and restarted' : ''}.`;
+      break;
+    case 'notification':
+      if (item.target === 'pushbullet') return `Notification sent: ${item.name}`;
+      break;
+    case 'error':
+      return `Error in ${item.target}${item.name ? ` (${item.name})` : ''}.`;
+    default:
+      return item.message || 'Unknown activity.';
+  }
+}
+
+// ...existing code...
+
 function DashboardPage() {
+  const [exporting, setExporting] = useState(false);
   const [stats, setStats] = useState(null);
   const [status, setStatus] = useState(null);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Le hook useEffect pour récupérer les données reste le même
   useEffect(() => {
-    // On utilise Promise.all pour lancer tous les appels réseau en parallèle
     const fetchData = async () => {
       let statsData = null;
       let statusData = null;
@@ -54,13 +101,13 @@ function DashboardPage() {
         }
         if (lastExportRes && lastExportRes.ok) {
           lastExportData = await lastExportRes.json();
-          setStatus(s => ({ ...s, lastExport: lastExportData[0]?.date || null }));
+          setStatus(s => ({ ...s, lastExport: lastExportData[0]?.timestamp || null }));
         } else {
           errorMsg = (errorMsg ? errorMsg + '\n' : '') + "Dernier export non chargé.";
         }
         if (errorMsg) setError(errorMsg);
       } catch (err) {
-        setError("Impossible de charger les données du dashboard. Vérifiez la connexion à l'API.");
+  setError("Unable to load dashboard data. Please check API connectivity.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -68,7 +115,7 @@ function DashboardPage() {
     };
 
     fetchData();
-  }, []); // Le tableau vide [] assure que cet effet ne s'exécute qu'une fois
+  }, []);
 
   if (loading) {
     return (
@@ -80,93 +127,91 @@ function DashboardPage() {
 
   // Show error as a non-blocking alert, but always render dashboard content
   return (
-    <Box sx={{ flexGrow: 1, p: 3 }}>
+    <div className="card"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}>
       {error && <Alert severity="error" sx={{ m: 4 }}>{error}</Alert>}
-      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
-        Dashboard
-      </Typography>
-      <Grid container spacing={3}>
-        {/* === CARTE ÉTAT DU SYSTÈME === */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card elevation={3}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>État du Système</Typography>
-              <Stack spacing={2} sx={{ mt: 2 }}>
+        {/* === SYSTEM STATUS CARD === */}
+          <Card elevation={4} sx={dashboardCardStyle}>
+            <Box sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6">System Status</Typography>
+            </Box>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Stack spacing={2} sx={{ mt: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   {status?.running ? (
                     <Power color="success" sx={{ mr: 1 }} />
                   ) : (
                     <PowerOff color="error" sx={{ mr: 1 }} />
                   )}
-                  <Typography>NGINX : {status?.running ? 'Actif' : 'Arrêté'}</Typography>
+                  <Typography>NGINX: {status.running ? 'Active' : 'Stopped'}</Typography>
                 </Box>
                 <Divider />
                 <Typography variant="body2" color="text.secondary">
-                  Dernier export : {formatDate(status?.lastExport)}
+                  Last export: {formatDate(status.lastExport)}
                 </Typography>
               </Stack>
             </CardContent>
           </Card>
-        </Grid>
 
-        {/* === CARTE STATISTIQUES === */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card elevation={3}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Statistiques</Typography>
-              <Stack spacing={2} sx={{ mt: 2 }}>
-                <Typography variant="h5">{stats?.totalServices || 0} <span style={{fontSize: '1rem', color: '#888'}}>Services</span></Typography>
-                <Box sx={{ pl: 2 }}>
-                   <Typography> - Actifs : {stats?.enabledServices || 0}</Typography>
-                   <Typography> - Inactifs : {(stats?.totalServices || 0) - (stats?.enabledServices || 0)}</Typography>
-                </Box>
+        {/* === STATISTICS CARD === */}
+          <Card elevation={4} sx={dashboardCardStyle}>
+            <Box sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6">Statistics</Typography>
+            </Box>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <Typography variant="h5">{stats.enabledServices || 0} <span style={{fontSize: '1rem', color: '#888'}}>Active services</span></Typography>
                 <Divider />
-                <Typography variant="h5">{stats?.totalTemplates || 0} <span style={{fontSize: '1rem', color: '#888'}}>Templates</span></Typography>
+                <Typography variant="h5">{(stats.totalServices || 0) - (stats.enabledServices || 0)} <span style={{fontSize: '1rem', color: '#888'}}>Inactive services</span></Typography>
+                <Divider />
+                <Typography variant="h5">{stats.totalTemplates || 0} <span style={{fontSize: '1rem', color: '#888'}}>Templates</span></Typography>
               </Stack>
             </CardContent>
           </Card>
-        </Grid>
 
-        {/* === CARTE ACTIONS RAPIDES === */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card elevation={3}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Actions Rapides</Typography>
-              <Stack spacing={2} sx={{ mt: 2 }}>
-                <Button variant="contained" startIcon={<RocketLaunch />}>Exporter la Configuration</Button>
-                <Button variant="outlined" startIcon={<AddCircleOutline />}>Ajouter un Service</Button>
-                <Button variant="outlined" startIcon={<AddCircleOutline />}>Ajouter un Template</Button>
+        {/* === QUICK ACTIONS CARD === */}
+          <Card elevation={4} sx={dashboardCardStyle}>
+            <Box sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6">Quick Actions</Typography>
+            </Box>
+            <CardContent sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+              <Stack spacing={2} sx={{ width: '100%' }}>
+                <ExportButton />
+                <Button variant="outlined" startIcon={<AddCircleOutline />}>Add Service</Button>
+                <Button variant="outlined" startIcon={<AddCircleOutline />}>Add Template</Button>
               </Stack>
             </CardContent>
           </Card>
-        </Grid>
         
-        {/* === CARTE ACTIVITÉ RÉCENTE === */}
-        <Grid item xs={12}>
-          <Card elevation={3}>
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+        {/* === RECENT ACTIVITY CARD === */}
+          <Card elevation={4} sx={dashboardCardStyle}>
+            <Box sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
                 <History />
-                <Typography variant="h6">Activité Récente</Typography>
+                <Typography variant="h6">Recent Activity</Typography>
               </Stack>
-              <Stack spacing={1.5}>
+            </Box>
+            <CardContent sx={{ overflowY: 'auto', p: 0 }}>
+              <Stack spacing={1.5} sx={{ p: 2 }}>
                 {activity.length > 0 ? (
-                  activity.map((item, index) => (
+                  activity.slice(0, 5).reverse().map((item, index) => (
                     <Box key={index}>
-                      <Typography variant="body1">{item.message}</Typography>
+                      <Typography variant="body1">{getActivityMessage(item)}</Typography>
                       <Typography variant="caption" color="text.secondary">{formatDate(item.timestamp)}</Typography>
-                      {index < activity.length - 1 && <Divider sx={{ mt: 1.5 }} />}
+                      {index < Math.min(activity.length, 5) - 1 && <Divider sx={{ mt: 1.5 }} />}
                     </Box>
                   ))
                 ) : (
-                  <Typography color="text.secondary">Aucune activité récente à afficher.</Typography>
+                  <Typography color="text.secondary">No recent activity to display.</Typography>
                 )}
               </Stack>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+    </div>
   );
 }
 

@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const router = express.Router();
+const { logActivity } = require('./utils');
 
 const servicesPath = path.join(__dirname, '..', 'db', 'services.json');
 const defaultsPath = path.join(__dirname, '..', 'db', 'defaults.json');
@@ -36,6 +37,7 @@ router.post('/add', (req, res) => {
     if (err) {
       return res.status(500).json({ error: 'Erreur lors de l\'écriture du fichier' });
     }
+    logActivity({ type: 'service', target: 'add', name, details: { serviceData }, result: { success: true } });
     res.json({ success: true, services });
   });
 });
@@ -50,6 +52,7 @@ router.post('/edit/:name', (req, res) => {
       // remove name if present
       if (body.name) delete body.name;
       fs.writeFileSync(defaultsPath, JSON.stringify(body, null, 2), 'utf8');
+      logActivity({ type: 'service', target: 'edit', name: 'Defaults', details: { body }, result: { success: true } });
       return res.json({ success: true, services, defaults: body });
     } catch (e) {
       return res.status(500).json({ error: 'Erreur lors de l\'écriture des defaults' });
@@ -64,6 +67,7 @@ router.post('/edit/:name', (req, res) => {
     if (err) {
       return res.status(500).json({ error: 'Erreur lors de l\'écriture du fichier' });
     }
+    logActivity({ type: 'service', target: 'edit', name, details: { update: req.body }, result: { success: true } });
     res.json({ success: true, services });
   });
 });
@@ -82,6 +86,7 @@ router.delete('/edit/:name', (req, res) => {
     if (err) {
       return res.status(500).json({ error: 'Error writing file' });
     }
+    logActivity({ type: 'service', target: 'delete', name, details: {}, result: { success: true } });
     res.json({ success: true, services });
   });
 });

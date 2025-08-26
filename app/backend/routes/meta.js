@@ -21,7 +21,6 @@ router.get('/fields', (req, res) => {
 router.get('/stats', (req, res) => {
   try {
     const serviceList = Array.isArray(services) ? services : Object.values(services);
-    console.log('Service list:', services, serviceList);
     const totalServices = serviceList.length;
     const enabledServices = serviceList.filter(s => s.enabled).length;
 
