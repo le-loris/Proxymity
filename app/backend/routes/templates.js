@@ -7,14 +7,18 @@ const router = express.Router();
 const templatesDir = path.join(__dirname, '..', 'db', 'templates');
 const templatesJsonPath = path.join(__dirname, '..', 'db', 'templates.json');
 let templatesMeta = {};
-try {
-  templatesMeta = require(templatesJsonPath);
-} catch (e) {
-  templatesMeta = {};
+function readTemplatesFile(){
+  try {
+    templatesMeta = require(templatesJsonPath);
+  } catch (e) {
+    templatesMeta = {};
+  }
 }
+readTemplatesFile();
 
 // Liste tous les templates
-router.get('/', (req, res) => {
+router.get('/', (req, res) => {-
+  readTemplatesFile();
   const entries = Object.entries(templatesMeta);
   if (entries.length === 0) return res.json([]);
   let count = entries.length;

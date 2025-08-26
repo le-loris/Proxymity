@@ -142,27 +142,29 @@ function ServicesPage() {
           onEdit={handleEdit}
           fields={fields}
         />
-        {Object.entries(services).map(([name, service], index) => (
-          <ServiceCard
-            key={name}
-            title={name}
-            data={service}
-            onEdit={handleEdit}
-            onToggleEnabled={(title, newData) => {
-              fetch(`/api/services/edit/${encodeURIComponent(title)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newData)
-              })
-                .then(res => res.json())
-                .then(data => {
-                  if (!data.error) setServices(data.services);
-                });
-            }}
-            fields={fields}
-            templates={templates}
-          />
-        ))}
+        {Object.entries(services)
+          .sort(([aName], [bName]) => aName.localeCompare(bName))
+          .map(([name, service], index) => (
+            <ServiceCard
+              key={name}
+              title={name}
+              data={service}
+              onEdit={handleEdit}
+              onToggleEnabled={(title, newData) => {
+                fetch(`/api/services/edit/${encodeURIComponent(title)}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(newData)
+                })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (!data.error) setServices(data.services);
+                  });
+              }}
+              fields={fields}
+              templates={templates}
+            />
+          ))}
         <AddCard onClick={handleAdd} type="service" />
       </div>
       <ServiceForm

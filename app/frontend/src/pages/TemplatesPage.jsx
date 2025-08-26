@@ -25,22 +25,25 @@ function TemplatesPage() {
           flexWrap: 'wrap',
           justifyContent: 'center',
         }}>
-        {templates.map((tpl) => (
-          <TemplateCard
-            key={tpl.name}
-            name={tpl.name}
-            meta={tpl.meta}
-            onEdit={() => {
-              setTemplateFormData({
-                name: tpl.name,
-                text: tpl.text,
-                description: tpl.meta?.description || ''
-              });
-              setTemplateFormMode('edit');
-              setTemplateFormOpen(true);
-            }}
-          />
-        ))}
+        {templates
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((tpl) => (
+            <TemplateCard
+              key={tpl.name}
+              name={tpl.name}
+              meta={tpl.meta}
+              onEdit={() => {
+                setTemplateFormData({
+                  name: tpl.name,
+                  text: tpl.text,
+                  description: tpl.meta?.description || ''
+                });
+                setTemplateFormMode('edit');
+                setTemplateFormOpen(true);
+              }}
+            />
+          ))}
         <AddCard onClick={() => {
           setTemplateFormData({ name: '', text: '' });
           setTemplateFormMode('add');
