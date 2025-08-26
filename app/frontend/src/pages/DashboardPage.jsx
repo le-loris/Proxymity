@@ -21,28 +21,44 @@ function DashboardPage() {
   useEffect(() => {
     // On utilise Promise.all pour lancer tous les appels réseau en parallèle
     const fetchData = async () => {
+      let statsData = null;
+      let statusData = null;
+      let activityData = [];
+      let lastExportData = null;
+      let errorMsg = null;
       try {
         const [statsRes, statusRes, activityRes, lastExportRes] = await Promise.all([
-          fetch('/api/stats'),
-          fetch('/api/settings/status'),
-          fetch('/api/activity'),
-          fetch('/api/export/last')
+          fetch('/api/stats').catch(() => null),
+          fetch('/api/settings/status').catch(() => null),
+          fetch('/api/activity').catch(() => null),
+          fetch('/api/export/last').catch(() => null)
         ]);
 
-        if (!statsRes.ok || !statusRes.ok || !activityRes.ok || !lastExportRes.ok) {
-          throw new Error('Une des réponses du réseau n\'était pas OK');
+        if (statsRes && statsRes.ok) {
+          statsData = await statsRes.json();
+          setStats(statsData);
+        } else {
+          errorMsg = (errorMsg ? errorMsg + '\n' : '') + "Statistiques non chargées.";
         }
-
-        const statsData = await statsRes.json();
-        const statusData = await statusRes.json();
-        const activityData = await activityRes.json();
-        const lastExportData = await lastExportRes.json();
-
-        setStats(statsData);
-        setStatus(statusData);
-        setActivity(activityData);
-        // lastExportData is an array, take the first element's date if exists
-        setStatus(s => ({ ...s, lastExport: lastExportData[0]?.date || null }));
+        if (statusRes && statusRes.ok) {
+          statusData = await statusRes.json();
+          setStatus(statusData);
+        } else {
+          errorMsg = (errorMsg ? errorMsg + '\n' : '') + "État du système non chargé.";
+        }
+        if (activityRes && activityRes.ok) {
+          activityData = await activityRes.json();
+          setActivity(activityData);
+        } else {
+          errorMsg = (errorMsg ? errorMsg + '\n' : '') + "Activité non chargée.";
+        }
+        if (lastExportRes && lastExportRes.ok) {
+          lastExportData = await lastExportRes.json();
+          setStatus(s => ({ ...s, lastExport: lastExportData[0]?.date || null }));
+        } else {
+          errorMsg = (errorMsg ? errorMsg + '\n' : '') + "Dernier export non chargé.";
+        }
+        if (errorMsg) setError(errorMsg);
       } catch (err) {
         setError("Impossible de charger les données du dashboard. Vérifiez la connexion à l'API.");
         console.error(err);
@@ -62,12 +78,10 @@ function DashboardPage() {
     );
   }
 
-  if (error) {
-    return <Alert severity="error" sx={{ m: 4 }}>{error}</Alert>;
-  }
-
+  // Show error as a non-blocking alert, but always render dashboard content
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
+      {error && <Alert severity="error" sx={{ m: 4 }}>{error}</Alert>}
       <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
         Dashboard
       </Typography>
@@ -79,16 +93,16 @@ function DashboardPage() {
               <Typography variant="h6" gutterBottom>État du Système</Typography>
               <Stack spacing={2} sx={{ mt: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  {status.running ? (
+                  {status?.running ? (
                     <Power color="success" sx={{ mr: 1 }} />
                   ) : (
                     <PowerOff color="error" sx={{ mr: 1 }} />
                   )}
-                  <Typography>NGINX : {status.running ? 'Actif' : 'Arrêté'}</Typography>
+                  <Typography>NGINX : {status?.running ? 'Actif' : 'Arrêté'}</Typography>
                 </Box>
                 <Divider />
                 <Typography variant="body2" color="text.secondary">
-                  Dernier export : {formatDate(status.lastExport)}
+                  Dernier export : {formatDate(status?.lastExport)}
                 </Typography>
               </Stack>
             </CardContent>
@@ -101,13 +115,13 @@ function DashboardPage() {
             <CardContent>
               <Typography variant="h6" gutterBottom>Statistiques</Typography>
               <Stack spacing={2} sx={{ mt: 2 }}>
-                <Typography variant="h5">{stats.totalServices || 0} <span style={{fontSize: '1rem', color: '#888'}}>Services</span></Typography>
+                <Typography variant="h5">{stats?.totalServices || 0} <span style={{fontSize: '1rem', color: '#888'}}>Services</span></Typography>
                 <Box sx={{ pl: 2 }}>
-                   <Typography> - Actifs : {stats.enabledServices || 0}</Typography>
-                   <Typography> - Inactifs : {(stats.totalServices || 0) - (stats.enabledServices || 0)}</Typography>
+                   <Typography> - Actifs : {stats?.enabledServices || 0}</Typography>
+                   <Typography> - Inactifs : {(stats?.totalServices || 0) - (stats?.enabledServices || 0)}</Typography>
                 </Box>
                 <Divider />
-                <Typography variant="h5">{stats.totalTemplates || 0} <span style={{fontSize: '1rem', color: '#888'}}>Templates</span></Typography>
+                <Typography variant="h5">{stats?.totalTemplates || 0} <span style={{fontSize: '1rem', color: '#888'}}>Templates</span></Typography>
               </Stack>
             </CardContent>
           </Card>

@@ -94,7 +94,7 @@ router.get('/status', async (req, res) => {
       notifierApiKey: notifierApiKey || ''
     });
   } catch (e) {
-    res.status(500).json({ running: false, status: '?', color: 'warning', containerName: '?', action: referenceAction || 'default', error: e.message });
+    res.status(500).json({ running: false, status: '?', color: 'warning', containerName: '?', action: action || 'default', error: e.message });
   }
 });
 
