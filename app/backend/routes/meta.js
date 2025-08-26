@@ -22,7 +22,9 @@ router.get('/stats', (req, res) => {
   try {
     const serviceList = Array.isArray(services) ? services : Object.values(services);
     const totalServices = serviceList.length;
-    const enabledServices = serviceList.filter(s => s.enabled).length;
+    const enabledServices = serviceList.filter(s =>
+      typeof s.enabled !== 'undefined' ? s.enabled : defaults.enabled
+    ).length;
 
     const templateList = Array.isArray(templates) ? templates : Object.values(templates);
     const totalTemplates = templateList.length;

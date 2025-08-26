@@ -83,6 +83,7 @@ function DashboardPage() {
 
         if (statsRes && statsRes.ok) {
           statsData = await statsRes.json();
+          console.log("Stats data:", statsData);
           setStats(statsData);
         } else {
           errorMsg = (errorMsg ? errorMsg + '\n' : '') + "Statistiques non chargées.";

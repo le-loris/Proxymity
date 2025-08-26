@@ -27,14 +27,16 @@ function ServiceForm({
   loading = false,
   error = '',
 }) {
-  console.log('ServiceForm', { open, mode, initialData, fields, defaults, templates, loading, error });
-  const [form, setForm] = useState(initialData);
+  // Merge defaults into initialData for missing fields
+  const mergedData = { ...defaults, ...initialData };
+  console.log('ServiceForm', { open, mode, initialData, mergedData, fields, defaults, templates, loading, error });
+  const [form, setForm] = useState(mergedData);
   const [localError, setLocalError] = useState('');
 
   useEffect(() => {
-    setForm(initialData);
+    setForm({ ...defaults, ...initialData });
     setLocalError('');
-  }, [initialData, open]);
+  }, [initialData, defaults, open]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

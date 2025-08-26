@@ -25,8 +25,8 @@ else
 fi
 
 # Ensure APP_USER is in the docker group for Docker access
-if getent group root >/dev/null; then
-    addgroup $APP_USER root
+if getent group ping >/dev/null; then
+    addgroup $APP_USER ping
 fi
 
 # Change ownership of relevant directories (optional, adjust as needed)
