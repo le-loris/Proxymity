@@ -163,6 +163,7 @@ function ServicesPage() {
               }}
               fields={fields}
               templates={templates}
+              defaults={defaults}
             />
           ))}
         <AddCard onClick={handleAdd} type="service" />

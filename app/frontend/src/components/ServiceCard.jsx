@@ -8,11 +8,16 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BlockIcon from '@mui/icons-material/Block';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-function ServiceCard({ title, data, onEdit, onToggleEnabled, fields }) {
+function ServiceCard({ title, data, onEdit, onToggleEnabled, fields, defaults}) {
   
   // enabled : valeur du service ou du default
   const enabled = typeof data.enabled !== 'undefined' ? data.enabled : (data.DefaultsEnabled ?? true);
+  const domain = data.domain || (defaults && defaults.domain) || '';
+  const subdomain = data.subdomain || '';
+  const url = domain && subdomain ? `https://${subdomain}.${domain}` : null;
+  console.log(data, defaults, domain, subdomain, url);
 
   if (title === "Fields") return null;
 
@@ -40,13 +45,20 @@ function ServiceCard({ title, data, onEdit, onToggleEnabled, fields }) {
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-        {title !== "Defaults" && (
-            <Tooltip title={enabled ? "Disable" : "Enable"}>
-              <IconButton size="small" onClick={e => { e.stopPropagation(); onToggleEnabled?.(title, { ...data, enabled: !enabled }); }} color={enabled ? 'success' : 'error'}>
-                {enabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
-        )}
+            {url && (
+              <Tooltip title="Open website">
+                <IconButton size="small" component="a" href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                  <OpenInNewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {title !== "Defaults" && (
+              <Tooltip title={enabled ? "Disable" : "Enable"}>
+                <IconButton size="small" onClick={e => { e.stopPropagation(); onToggleEnabled?.(title, { ...data, enabled: !enabled }); }} color={enabled ? 'success' : 'error'}>
+                  {enabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            )}
         </Stack>
       </Stack>
 
