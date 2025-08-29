@@ -5,15 +5,15 @@ const cors = require('cors');
 const fs = require('fs');
 
 // Synchronisation des fichiers de configuration par défaut
-const utils = require('./routes/utils');
+const utils = require('./utils');
 utils.syncDbDefaults();
 
 // Chargement des routes API
-const servicesRouter = require('./routes/services');
-const templatesRouter = require('./routes/templates');
-const metaRouter = require('./routes/meta');
-const settingsRouter = require('./routes/settings');
-const exportRouter = require('./routes/export');
+const servicesRouter = require('./routes/v1/services');
+const templatesRouter = require('./routes/v1/templates');
+const metaRouter = require('./routes/v1/meta');
+const settingsRouter = require('./routes/v1/settings');
+const exportRouter = require('./routes/v1/export');
 
 const app = express();
 const PORT = 3000;
@@ -23,11 +23,11 @@ app.use(bodyParser.json());
 
 
 // Utilisation des routes API
-app.use('/api/services', servicesRouter);
-app.use('/api/templates', templatesRouter);
-app.use('/api', metaRouter);
-app.use('/api/settings', settingsRouter);
-app.use('/api/export', exportRouter);
+app.use('/api/v1/services', servicesRouter);
+app.use('/api/v1/templates', templatesRouter);
+app.use('/api/v1/meta', metaRouter);
+app.use('/api/v1/settings', settingsRouter);
+app.use('/api/v1/export', exportRouter);
 
 
 // Sert les fichiers frontend

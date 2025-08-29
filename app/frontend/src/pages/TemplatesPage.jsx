@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import TemplateCard from '../components/TemplateCard';
 import AddCard from '../components/AddCard';
@@ -5,17 +6,101 @@ import TemplateForm from '../components/TemplateForm';
 
 function TemplatesPage() {
   const [templates, setTemplates] = useState([]);
-  const [templateFormOpen, setTemplateFormOpen] = useState(false);
-  const [templateFormMode, setTemplateFormMode] = useState('add');
-  const [templateFormData, setTemplateFormData] = useState({ name: '', text: '' });
-  const [templateFormError, setTemplateFormError] = useState('');
-  const [templateFormLoading, setTemplateFormLoading] = useState(false);
+  const [formData, setFormData] = useState({ name: '', text: '' });
+  const [formMode, setFormMode] = useState('add');
+  const [formOpen, setFormOpen] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
+  const [editName, setEditName] = useState('');
 
   useEffect(() => {
-    fetch('/api/templates')
+    fetch('/api/v1/templates')
       .then((res) => res.json())
       .then((data) => setTemplates(data));
   }, []);
+
+  const handleEdit = (tplName) => {
+    console.log('Editing template:', tplName, templates);
+    const tpl = templates[tplName];
+    setFormData({ name: tplName, text: tpl.text, description: tpl?.description || '' });
+    setEditName(tplName);
+    setFormError('');
+    setFormMode('edit');
+    setFormOpen(true);
+  };
+
+  const handleAdd = () => {
+    setFormData({ name: '', text: '' });
+    setFormError('');
+    setFormMode('add');
+    setFormOpen(true);
+  };
+
+  const handleFormSubmit = (form) => {
+    setFormLoading(true);
+    setFormError('');
+    if (formMode === 'add') {
+      fetch('/api/v1/templates', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setFormError(data.error);
+          } else {
+            fetch('/api/v1/templates')
+              .then(res => res.json())
+              .then(setTemplates);
+            setFormOpen(false);
+          }
+        })
+        .catch(() => setFormError('Network error'))
+        .finally(() => setFormLoading(false));
+    } else if (formMode === 'edit') {
+      fetch(`/api/v1/templates/${encodeURIComponent(editName)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            setFormError(data.error);
+          } else {
+            fetch('/api/v1/templates')
+              .then(res => res.json())
+              .then(setTemplates);
+            setFormOpen(false);
+          }
+        })
+        .catch(() => setFormError('Network error'))
+        .finally(() => setFormLoading(false));
+    }
+  };
+
+  const handleFormDelete = (name) => {
+    setFormLoading(true);
+    setFormError('');
+    fetch(`/api/v1/templates/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setFormError(data.error);
+        } else {
+          fetch('/api/v1/templates')
+              .then(res => res.json())
+              .then(setTemplates);
+          setFormOpen(false);
+        }
+      })
+      .catch(() => setFormError('Network error'))
+      .finally(() => setFormLoading(false));
+  };
 
   return (
     <>
@@ -25,82 +110,28 @@ function TemplatesPage() {
           flexWrap: 'wrap',
           justifyContent: 'center',
         }}>
-        {templates
-          .slice()
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((tpl) => (
+          {/*console.log('Rendering templates:', templates)*/}
+        {Object.entries(templates)
+          .sort(([aName], [bName]) => aName.localeCompare(bName))
+          .map(([name, template], index) => (
             <TemplateCard
-              key={tpl.name}
-              name={tpl.name}
-              meta={tpl.meta}
-              onEdit={() => {
-                setTemplateFormData({
-                  name: tpl.name,
-                  text: tpl.text,
-                  description: tpl.meta?.description || ''
-                });
-                setTemplateFormMode('edit');
-                setTemplateFormOpen(true);
-              }}
+              key={name}
+              name={name}
+              meta={template}
+              onEdit={() => handleEdit(name)}
             />
           ))}
-        <AddCard onClick={() => {
-          setTemplateFormData({ name: '', text: '' });
-          setTemplateFormMode('add');
-          setTemplateFormOpen(true);
-        }} type="template" />
+        <AddCard onClick={handleAdd} type="template" />
       </div>
       <TemplateForm
-        open={templateFormOpen}
-        mode={templateFormMode}
-        initialData={templateFormData}
-        onCancel={() => setTemplateFormOpen(false)}
-        onSubmit={(tpl) => {
-          setTemplateFormLoading(true);
-          setTemplateFormError('');
-          console.log('[TemplatesPage] onSubmit:', tpl, 'mode:', templateFormMode);
-          const ifName = templateFormMode === 'edit' ? `/${encodeURIComponent(tpl.name)}` : '';
-          fetch(`/api/templates/${templateFormMode}${ifName}`, {
-            method:'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tpl)
-          })
-            .then(res => res.json())
-            .then(data => {
-              if (data.error) {
-                setTemplateFormError(data.error);
-              } else {
-                fetch('/api/templates')
-                  .then(res => res.json())
-                  .then(setTemplates);
-                setTemplateFormOpen(false);
-              }
-            })
-            .catch(() => setTemplateFormError('Network error'))
-            .finally(() => setTemplateFormLoading(false));
-        }}
-        onDelete={(name) => {
-          setTemplateFormLoading(true);
-          fetch(`/api/templates/edit/${encodeURIComponent(name)}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-          })
-            .then(res => res.json())
-            .then(data => {
-              if (data.error) {
-                setTemplateFormError(data.error);
-              } else {
-                fetch('/api/templates')
-                  .then(res => res.json())
-                  .then(setTemplates);
-                setTemplateFormOpen(false);
-              }
-            })
-            .catch(() => setTemplateFormError('Network error'))
-            .finally(() => setTemplateFormLoading(false));
-        }}
-        loading={templateFormLoading}
-        error={templateFormError}
+        open={formOpen}
+        mode={formMode}
+        initialData={formData}
+        onCancel={() => setFormOpen(false)}
+        onSubmit={handleFormSubmit}
+        onDelete={handleFormDelete}
+        loading={formLoading}
+        error={formError}
       />
     </>
   );

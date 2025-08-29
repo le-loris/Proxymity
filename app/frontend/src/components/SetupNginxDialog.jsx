@@ -34,7 +34,7 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
   const [action, setAction] = useState('default');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [notifierEnabled, setNotifierEnabled] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [notifierApiKey, setNotifierApiKey] = useState('');
   const [nginxDir, setNginxDir] = useState('');
   const [dirEntries, setDirEntries] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,21 +44,25 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
     if (!open) return;
     setLoading(true);
     Promise.all([
-      fetch('/api/settings/containers').then(r => r.json()),
-      fetch('/api/settings/status').then(r => r.json())
+      fetch('/api/v1/settings/containers').then(r => r.json()),
+      fetch('/api/v1/settings').then(r => r.json())
     ]).then(([containersRes, statusRes]) => {
       setContainers(containersRes.containers || []);
-      console.log('[SetupNginxDialog] containers:', containersRes.containers);
-      console.log('[SetupNginxDialog] status:', statusRes);
       if (statusRes) {  
         setAction(statusRes.action || 'default');
-        setWebhookUrl(statusRes.webhookURL || '');
+        setWebhookUrl(statusRes.webhookUrl || '');
         setNotifierEnabled(!!statusRes.notifierEnabled);
-        setApiKey(statusRes.notifierApiKey || '');
+        setNotifierApiKey(statusRes.notifierApiKey || '');
         setNginxDir(statusRes.nginxDir || '');
+        console.log('[SetupNginxDialog] containers:', containersRes);
+        console.log('[SetupNginxDialog] status:', statusRes);
         // try to pre-select container if present
         if (statusRes.containerName) {
           const found = (containersRes.containers || []).find(c => c.Names && c.Names.some(n => n.replace(/^\//, '') === statusRes.containerName));
+          if (found) setSelected(found.Id);
+        } else {
+          // If containerName is null/undefined, select first container with 'nginx' in the name
+          const found = (containersRes.containers || []).find(c => c.Names && c.Names.some(n => n.includes('nginx')));
           if (found) setSelected(found.Id);
         }
       }
@@ -71,11 +75,11 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
   };
 
   const handleTestNotification = () => {
-    if (!apiKey) return;
+    if (!notifierApiKey) return;
     fetch('https://api.pushbullet.com/v2/pushes', {
       method: 'POST',
       headers: {
-        'Access-Token': apiKey,
+        'Access-Token': notifierApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -100,10 +104,12 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       containerName,
       action,
       webhookUrl,
-      notifier: { enabled: notifierEnabled, apiKey },
+      notifierEnabled,
+      notifierApiKey,
       nginxDir
     };
-    fetch('/api/settings/save', {
+    console.log('[SetupNginxDialog] Saving settings:', payload);
+    fetch('/api/v1/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -133,7 +139,7 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
   useEffect(() => {
     const t = setTimeout(() => {
       if (!nginxDir) return setDirEntries([]);
-      fetch('/api/settings/listdir?path=' + encodeURIComponent(nginxDir))
+      fetch('/api/v1/settings/list_dirs?path=' + encodeURIComponent(nginxDir))
         .then(r => r.json())
         .then(d => setDirEntries(d.entries || []))
         .catch(() => setDirEntries([]));
@@ -240,18 +246,16 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
             </Select>
           </FormControl>
         </Box>
-        <Box mt={2}>
-          <TextField
-            label="Webhook URL"
-            value={webhookUrl}
-            onChange={e => setWebhookUrl(e.target.value)}
-            fullWidth
-            disabled={action !== 'webhook'}
-            InputProps={{
-              style: { backgroundColor: action === 'webhook' ? undefined : '#606060' }
-            }}
-          />
-        </Box>
+        {action === 'webhook' && (
+          <Box mt={2}>
+            <TextField
+              label="Webhook URL"
+              value={webhookUrl}
+              onChange={e => setWebhookUrl(e.target.value)}
+              fullWidth
+            />
+          </Box>
+        )}
         <Box mt={3}>
           <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
             <Stack direction="row" spacing={1} alignItems="center">
@@ -274,15 +278,15 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
             <Button
               variant="contained"
               onClick={handleTestNotification}
-              disabled={!notifierEnabled || !apiKey}
+              disabled={!notifierEnabled || !notifierApiKey}
               size="small"
               sx={{
-                bgcolor: (!notifierEnabled || !apiKey) ? undefined : 'green',
+                bgcolor: (!notifierEnabled || !notifierApiKey) ? undefined : 'green',
                 color: 'white',
                 height: 32,
                 minWidth: 72,
                 '&:hover': {
-                  bgcolor: (!notifierEnabled || !apiKey) ? undefined : 'darkgreen',
+                  bgcolor: (!notifierEnabled || !notifierApiKey) ? undefined : 'darkgreen',
                 },
               }}
             >
@@ -293,8 +297,8 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
         <Box mt={1}>
           <TextField
             label="Pushbullet API Key"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            value={notifierApiKey}
+            onChange={(e) => setNotifierApiKey(e.target.value)}
             fullWidth
             disabled={!notifierEnabled}
             type="password"

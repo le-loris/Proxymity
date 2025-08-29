@@ -15,7 +15,7 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 
 function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit, onDelete, loading = false, error = '' }) {
-  const [form, setForm] = useState({ ...initialData, description: initialData.description ?? (initialData.meta?.description ?? '') });
+  const [form, setForm] = useState({ ...initialData, description: initialData.description ?? (initialData?.description ?? '') });
   const [localError, setLocalError] = useState('');
 
   useEffect(() => {
@@ -40,7 +40,7 @@ function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit
     }
     setLocalError('');
     const { name, text, description } = form;
-    onSubmit({ name, text, meta: { description: description || '' } });
+    onSubmit({ name, text, description: description });
   };
 
   const handleDelete = () => {

@@ -11,7 +11,7 @@ import ExportButton from './ExportButton';
 // API backend pour l'état du conteneur nginx
 async function fetchNginxStatus() {
   try {
-    const res = await fetch('/api/settings/status');
+    const res = await fetch('/api/v1/settings/status');
     if (!res.ok) return { running: false, status: '?', color: 'warning', containerName: '?' };
     const data = await res.json();
     return data;
@@ -98,7 +98,7 @@ export default function NginxStatus() {
         </Stack>
       </Popover>
     <SetupNginxDialog open={setupOpen} onClose={() => setSetupOpen(false)} onSelect={async (containerName, action, webhookUrl) => {
-      await fetch('/api/settings/save', {
+      await fetch('/api/v1/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ containerName, action, webhookUrl })

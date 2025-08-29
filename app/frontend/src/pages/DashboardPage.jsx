@@ -75,10 +75,10 @@ function DashboardPage() {
       let errorMsg = null;
       try {
         const [statsRes, statusRes, activityRes, lastExportRes] = await Promise.all([
-          fetch('/api/stats').catch(() => null),
-          fetch('/api/settings/status').catch(() => null),
-          fetch('/api/activity').catch(() => null),
-          fetch('/api/export/last').catch(() => null)
+          fetch('/api/v1/meta/stats').catch(() => null),
+          fetch('/api/v1/settings/status').catch(() => null),
+          fetch('/api/v1/meta/activity').catch(() => null),
+          fetch('/api/v1/export').catch(() => null)
         ]);
 
         if (statsRes && statsRes.ok) {

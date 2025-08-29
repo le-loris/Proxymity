@@ -21,11 +21,12 @@ export default function DirPreview({ nginxDir, setNginxDir, externalEntries, onS
     }
     const t = setTimeout(() => {
       if (!nginxDir) return setDirEntries([]);
-      fetch('/api/settings/listdir?path=' + encodeURIComponent(nginxDir))
+      fetch('/api/v1/settings/list_dirs?path=' + encodeURIComponent(nginxDir))
         .then(r => r.json())
-        .then(d => setDirEntries(d.entries || []))
+        .then(d => setDirEntries(d || []))
         .catch(() => setDirEntries([]));
     }, 250);
+    console.log('Fetching dir entries for', nginxDir, dirEntries);
     return () => clearTimeout(t);
   }, [nginxDir, externalEntries]);
 
@@ -45,11 +46,12 @@ export default function DirPreview({ nginxDir, setNginxDir, externalEntries, onS
 
   return (
     <Box sx={{ mt: 1, minHeight: 160, maxHeight: 160, overflow: 'auto', bgcolor: "#2e2e2e", p: 1, borderRadius: 1 }}>
-      {dirEntries.length === 0 ? (
+      {(dirEntries.files===undefined || (dirEntries.files!==undefined && dirEntries.files.length === 0) || dirEntries.length === 0) ? (
         <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>No entries</Typography>
       ) : (
         <List disablePadding>
-          {dirEntries.map((it) => (
+          { console.log(dirEntries)}
+          { dirEntries.files.map((it) => (
             <ListItemButton
               key={it.name}
               onClick={() => handleEntryClick(it)}

@@ -45,7 +45,7 @@ function ServiceCard({ title, data, onEdit, onToggleEnabled, fields, defaults}) 
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            {url && (
+            {url && enabled && (
               <Tooltip title="Open website">
                 <IconButton size="small" component="a" href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
                   <OpenInNewIcon fontSize="small" />

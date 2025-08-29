@@ -1,4 +1,5 @@
 {
+    "containerName" : null,
     "action" : "default",
     "webhookURL" : "",
     "nginxDir": "/app/nginx",

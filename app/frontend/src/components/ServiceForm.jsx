@@ -19,7 +19,7 @@ function ServiceForm({
   initialData = {},
   fields = {},
   defaults = {},
-  templates = [],
+  templates = {},
   onCancel,
   onSubmit,
   onDelete,
@@ -50,7 +50,7 @@ function ServiceForm({
   // Vérifie que tous les champs obligatoires sont remplis
   const getMissingRequired = () => {
     return Object.entries(fields)
-      .filter(([key, meta]) => meta.mandatory)
+      .filter(([key, meta]) => meta.required)
       .filter(([key]) => !form[key] && form[key] !== false)
       .map(([key]) => key);
   };
@@ -78,8 +78,10 @@ function ServiceForm({
         <DialogTitle>{mode === 'edit' ? 'Edit' : 'Add'} a service</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            {console.log("Fields in ServiceForm:", fields)}
             {Object.entries(fields).map(([field, meta]) => {
-              const missing = meta.mandatory && (!form[field] && form[field] !== false);
+              //console.log("Rendering field:", field, meta);
+              const missing = meta.required && (!form[field] && form[field] !== false);
               return (
                 <div key={field}>
                   {typeof defaults[field] === 'boolean' ? (
@@ -115,8 +117,8 @@ function ServiceForm({
                         error={!!missing}
                       >
                         <MenuItem value=""><em>Select a Template</em></MenuItem>
-                        {templates.map((tpl) => (
-                          <MenuItem key={tpl.name} value={tpl.name}>{tpl.name}</MenuItem>
+                        {Object.entries(templates).map(([tplName, tpl]) => (
+                          <MenuItem key={tplName} value={tplName}>{tplName}</MenuItem>
                         ))}
                       </TextField>
                     </Tooltip>

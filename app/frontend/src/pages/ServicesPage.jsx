@@ -16,24 +16,21 @@ function ServicesPage() {
   const [editName, setEditName] = useState("");
 
   useEffect(() => {
-    fetch('/api/services')
-      .then((res) => res.json())
-      .then((data) => setServices(data));
-    fetch('/api/defaults')
-      .then((res) => res.json())
-      .then((data) => setDefaults(data));
-    fetch('/api/fields')
-      .then((res) => res.json())
-      .then((data) => setFields(data));
-    // load templates from backend for ServiceForm
-    fetch('/api/templates')
-      .then(res => res.json())
-      .then(data => {
-        // templates route returns array of {name, text, meta} or {templates: [...]}
-        if (Array.isArray(data)) setTemplates(data);
-        else if (data && Array.isArray(data.templates)) setTemplates(data.templates);
-      })
-      .catch(() => setTemplates([]));
+    try{
+      fetch('/api/v1/services')
+        .then((res) => res.json())
+        .then((data) => setServices(data));
+      fetch('/api/v1/meta/defaults')
+        .then((res) => res.json())
+        .then((data) => setDefaults(data));
+      fetch('/api/v1/meta/fields')
+        .then((res) => res.json())
+        .then((data) => setFields(data));
+      // load templates from backend for ServiceForm
+      fetch('/api/v1/templates')
+        .then(res => res.json())
+        .then(data => setTemplates(data))
+    }catch(e){console.log("Error fetching data:", e);}
   }, []);
 
   const handleEdit = (serviceName) => {
@@ -60,8 +57,8 @@ function ServicesPage() {
     setFormLoading(true);
     setFormError("");
     if (formMode === 'add') {
-      fetch('/api/services/add', {
-        method: 'POST',
+      fetch('/api/v1/services', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
@@ -70,14 +67,16 @@ function ServicesPage() {
           if (data.error) {
             setFormError(data.error);
           } else {
-            setServices(data.services);
+            fetch('/api/v1/services')
+              .then(res => res.json())
+              .then(setServices);
             setFormOpen(false);
           }
         })
         .catch(() => setFormError("Network error"))
         .finally(() => setFormLoading(false));
     } else if (formMode === 'edit') {
-      fetch(`/api/services/edit/${encodeURIComponent(editName)}`, {
+      fetch(`/api/v1/services/${encodeURIComponent(editName)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -92,7 +91,9 @@ function ServicesPage() {
               setDefaults(data.defaults);
             }
             // Update services list if present
-            if (data.services) setServices(data.services);
+            fetch('/api/v1/services')
+              .then(res => res.json())
+              .then(setServices);
             setFormOpen(false);
           }
         })
@@ -110,7 +111,7 @@ function ServicesPage() {
       setFormLoading(false);
       return;
     }
-    fetch(`/api/services/edit/${encodeURIComponent(name)}`, {
+    fetch(`/api/v1/services/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -119,7 +120,9 @@ function ServicesPage() {
         if (data.error) {
           setFormError(data.error);
         } else {
-          setServices(data.services);
+          fetch('/api/v1/services')
+              .then(res => res.json())
+              .then(setServices);
           setFormOpen(false);
         }
       })
@@ -151,14 +154,17 @@ function ServicesPage() {
               data={service}
               onEdit={handleEdit}
               onToggleEnabled={(title, newData) => {
-                fetch(`/api/services/edit/${encodeURIComponent(title)}`, {
+                fetch(`/api/v1/services/${encodeURIComponent(title)}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(newData)
                 })
                   .then(res => res.json())
                   .then(data => {
-                    if (!data.error) setServices(data.services);
+                    if (!data.error) 
+                      fetch('/api/v1/services')
+                        .then(res => res.json())
+                        .then(setServices);
                   });
               }}
               fields={fields}
