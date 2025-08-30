@@ -80,7 +80,8 @@ function ServiceForm({
           <Stack spacing={2} sx={{ mt: 1 }}>
             {console.log("Fields in ServiceForm:", fields)}
             {Object.entries(fields).map(([field, meta]) => {
-              //console.log("Rendering field:", field, meta);
+              console.log("Rendering field:", field, meta, meta.hidden);
+              if (meta.hidden) return null;
               const missing = meta.required && (!form[field] && form[field] !== false);
               return (
                 <div key={field}>

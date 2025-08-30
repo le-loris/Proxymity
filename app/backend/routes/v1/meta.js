@@ -33,7 +33,7 @@ router.get('/activity', (req, res) => {
     if (!fs.existsSync(ACTIVITY_LOG_PATH)) return res.json({ success: true, activity: [] });
     const lines = fs.readFileSync(ACTIVITY_LOG_PATH, 'utf8').split('\n').filter(Boolean);
     const entries = lines.map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
-    res.json({ success: true, activity: entries });
+    res.json(entries);
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }

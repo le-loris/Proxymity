@@ -34,6 +34,18 @@ router.put('/', (req, res) => {
   });
 });
 
+// GET all favorite services
+router.get('/favorites', (req, res) => {
+  loadServices();
+  const favorites = Object.entries(servicesCache)
+    .filter(([_, service]) => service.favorite === true)
+    .reduce((acc, [name, service]) => {
+      acc[name] = service;
+      return acc;
+    }, {});
+  res.json(favorites);
+});
+
 // GET specific service
 router.get('/:key', (req, res) => {
   loadServices();

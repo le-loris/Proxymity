@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
-const ACTIVITY_LOG_PATH = path.join(__dirname, '..', 'db', 'activity.log');
+const ACTIVITY_LOG_PATH = path.join(__dirname, '.', 'db', 'activity.log');
 // --- Generator helpers ---
 function loadConfig(jsonFile) {
   const text = fs.readFileSync(jsonFile, 'utf8');

@@ -6,14 +6,16 @@ import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BlockIcon from '@mui/icons-material/Block';
+import StarIcon from '@mui/icons-material/Star';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-function ServiceCard({ title, data, onEdit, onToggleEnabled, fields, defaults}) {
+function ServiceCard({ title, data, onEdit, onToggle, fields, defaults}) {
   
   // enabled : valeur du service ou du default
   const enabled = typeof data.enabled !== 'undefined' ? data.enabled : (data.DefaultsEnabled ?? true);
+  const favorite = data.favorite || (defaults && defaults.favorite) || false;
   const domain = data.domain || (defaults && defaults.domain) || '';
   const subdomain = data.subdomain || '';
   const url = domain && subdomain ? `https://${subdomain}.${domain}` : null;
@@ -38,35 +40,60 @@ function ServiceCard({ title, data, onEdit, onToggleEnabled, fields, defaults}) 
     >
       {/* En-tête */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
-        <Typography variant="h6" sx={{ fontSize: '1.1rem', m: 0 }}>{title}</Typography>
-          <Stack direction="row" spacing={0.5}>
-            <Tooltip title="Edit">
-              <IconButton size="small" onClick={() => onEdit?.(title)}>
-                <EditIcon fontSize="small" />
+        <Stack direction="row" alignItems="center" spacing={1}>
+          {title !== "Defaults" && (
+            <Tooltip title={favorite ? "Remove from favorites" : "Add to favorites"}>
+              <IconButton size="small" onClick={e => { e.stopPropagation(); onToggle?.(title, { ...data, favorite: !favorite }); }}>
+                <StarIcon fontSize="small" sx={{ color: favorite ? '#FFD700' : '#B0B0B0' }} />
               </IconButton>
             </Tooltip>
-            {url && enabled && (
-              <Tooltip title="Open website">
-                <IconButton size="small" component="a" href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
-                  <OpenInNewIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            {title !== "Defaults" && (
-              <Tooltip title={enabled ? "Disable" : "Enable"}>
-                <IconButton size="small" onClick={e => { e.stopPropagation(); onToggleEnabled?.(title, { ...data, enabled: !enabled }); }} color={enabled ? 'success' : 'error'}>
-                  {enabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            )}
+          )}
+          {url && enabled ? (
+            <Typography
+              variant="h6"
+              component="a"
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                fontSize: '1.1rem',
+                m: 0,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: '#ffffffff',
+                '&:hover': {
+                  color: '#a0a0a0ff',
+                },
+              }}
+            >
+              {title}
+            </Typography>
+          ) : (
+            <Typography variant="h6" sx={{ fontSize: '1.1rem', m: 0 }}>{title}</Typography>
+          )}
+        </Stack>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Tooltip title="Edit">
+            <IconButton size="small" onClick={() => onEdit?.(title)}>
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {title !== "Defaults" && (
+            <Tooltip title={enabled ? "Disable" : "Enable"}>
+              <IconButton size="small" onClick={e => { e.stopPropagation(); onToggle?.(title, { ...data, enabled: !enabled }); }} color={enabled ? 'success' : 'error'}>
+                {enabled ? <CheckCircleIcon fontSize="small" /> : <BlockIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </Stack>
 
       {/* Contenu */}
       <Stack sx={{ px: 2, py: 1 }}>
         {Object.entries(data)
-          .filter(([key]) => key !== 'name' && key !== 'enabled')
+          .filter(([key]) => key !== 'name')
           .filter(([key, value]) => value !== "" && value !== undefined && value !== null)
+          .filter(([key]) => !(fields && fields[key] && fields[key].hidden))
           .map(([key, value]) => (
             <Typography key={key} sx={{ textAlign: 'left', mb: 0.5, fontSize: '0.95rem' }}>
               <span style={{ fontWeight: 600 }}>{fields && fields[key] && fields[key].name ? fields[key].name : key}</span>: {typeof value === 'boolean' ? (value ? <CheckCircleIcon color="success" fontSize="inherit" sx={{ verticalAlign: 'middle' }} /> : <BlockIcon color="error" fontSize="inherit" sx={{ verticalAlign: 'middle' }} />) : value}

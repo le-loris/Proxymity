@@ -153,7 +153,7 @@ function ServicesPage() {
               title={name}
               data={service}
               onEdit={handleEdit}
-              onToggleEnabled={(title, newData) => {
+              onToggle={(title, newData) => {
                 fetch(`/api/v1/services/${encodeURIComponent(title)}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -161,7 +161,7 @@ function ServicesPage() {
                 })
                   .then(res => res.json())
                   .then(data => {
-                    if (!data.error) 
+                    if (!data.error)
                       fetch('/api/v1/services')
                         .then(res => res.json())
                         .then(setServices);

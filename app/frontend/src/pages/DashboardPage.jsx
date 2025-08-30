@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography, Box, CircularProgress, Button, Stack, Divider, Alert } from '@mui/material';
+import ServiceCard from '../components/ServiceCard';
 import { Power, PowerOff, AddCircleOutline, History } from '@mui/icons-material';
 import ExportButton from '../components/ExportButton';
 
@@ -64,6 +65,9 @@ function DashboardPage() {
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [favorites, setFavorites] = useState({});
+  const [fields, setFields] = useState({});
+  const [defaults, setDefaults] = useState({});
 
   // Le hook useEffect pour récupérer les données reste le même
   useEffect(() => {
@@ -72,18 +76,23 @@ function DashboardPage() {
       let statusData = null;
       let activityData = [];
       let lastExportData = null;
+      let favoritesData = {};
+      let fieldsData = {};
+      let defaultsData = {};
       let errorMsg = null;
       try {
-        const [statsRes, statusRes, activityRes, lastExportRes] = await Promise.all([
+        const [statsRes, statusRes, activityRes, lastExportRes, favoritesRes, fieldsRes, defaultsRes] = await Promise.all([
           fetch('/api/v1/meta/stats').catch(() => null),
           fetch('/api/v1/settings/status').catch(() => null),
           fetch('/api/v1/meta/activity').catch(() => null),
-          fetch('/api/v1/export').catch(() => null)
+          fetch('/api/v1/export').catch(() => null),
+          fetch('/api/v1/services/favorites').catch(() => null),
+          fetch('/api/v1/meta/fields').catch(() => null),
+          fetch('/api/v1/meta/defaults').catch(() => null)
         ]);
 
         if (statsRes && statsRes.ok) {
           statsData = await statsRes.json();
-          console.log("Stats data:", statsData);
           setStats(statsData);
         } else {
           errorMsg = (errorMsg ? errorMsg + '\n' : '') + "Statistiques non chargées.";
@@ -106,9 +115,21 @@ function DashboardPage() {
         } else {
           errorMsg = (errorMsg ? errorMsg + '\n' : '') + "Dernier export non chargé.";
         }
+        if (favoritesRes && favoritesRes.ok) {
+          favoritesData = await favoritesRes.json();
+          setFavorites(favoritesData);
+        }
+        if (fieldsRes && fieldsRes.ok) {
+          fieldsData = await fieldsRes.json();
+          setFields(fieldsData);
+        }
+        if (defaultsRes && defaultsRes.ok) {
+          defaultsData = await defaultsRes.json();
+          setDefaults(defaultsData);
+        }
         if (errorMsg) setError(errorMsg);
       } catch (err) {
-  setError("Unable to load dashboard data. Please check API connectivity.");
+        setError("Unable to load dashboard data. Please check API connectivity.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -135,7 +156,9 @@ function DashboardPage() {
           justifyContent: 'center',
         }}>
       {error && <Alert severity="error" sx={{ m: 4 }}>{error}</Alert>}
-        {/* === SYSTEM STATUS CARD === */}
+        {/* === DASHBOARD CARDS === */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+          {/* === SYSTEM STATUS CARD === */}
           <Card elevation={4} sx={dashboardCardStyle}>
             <Box sx={{ px: 2, pt: 1.2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
               <Typography variant="h6">System Status</Typography>
@@ -165,11 +188,11 @@ function DashboardPage() {
             </Box>
             <CardContent sx={{ flexGrow: 1 }}>
               <Stack spacing={2} sx={{ mt: 1 }}>
-                <Typography variant="h5">{stats.enabledServices || 0} <span style={{fontSize: '1rem', color: '#888'}}>Active services</span></Typography>
+                <Typography variant="h5">{stats?.enabledServices || 0} <span style={{fontSize: '1rem', color: '#888'}}>Active services</span></Typography>
                 <Divider />
-                <Typography variant="h5">{(stats.totalServices || 0) - (stats.enabledServices || 0)} <span style={{fontSize: '1rem', color: '#888'}}>Inactive services</span></Typography>
+                <Typography variant="h5">{(stats?.totalServices || 0) - (stats?.enabledServices || 0)} <span style={{fontSize: '1rem', color: '#888'}}>Inactive services</span></Typography>
                 <Divider />
-                <Typography variant="h5">{stats.totalTemplates || 0} <span style={{fontSize: '1rem', color: '#888'}}>Templates</span></Typography>
+                <Typography variant="h5">{stats?.totalTemplates || 0} <span style={{fontSize: '1rem', color: '#888'}}>Templates</span></Typography>
               </Stack>
             </CardContent>
           </Card>
@@ -199,7 +222,7 @@ function DashboardPage() {
             <CardContent sx={{ overflowY: 'auto', p: 0 }}>
               <Stack spacing={1.5} sx={{ p: 2 }}>
                 {activity.length > 0 ? (
-                  activity.slice(0, 5).reverse().map((item, index) => (
+                  activity.reverse().slice(0, 5).map((item, index) => (
                     <Box key={index}>
                       <Typography variant="body1">{getActivityMessage(item)}</Typography>
                       <Typography variant="caption" color="text.secondary">{formatDate(item.timestamp)}</Typography>
@@ -212,6 +235,40 @@ function DashboardPage() {
               </Stack>
             </CardContent>
           </Card>
+        </Box>
+        <Divider sx={{ my: 3, width: '100%' }} />
+        {/* === FAVORITE SERVICES CARDS === */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+          {Object.entries(favorites).length > 0 ? (
+            Object.entries(favorites)
+              .sort(([aName], [bName]) => aName.localeCompare(bName))
+              .map(([name, service]) => (
+                <ServiceCard
+                  key={name}
+                  title={name}
+                  data={service}
+                  fields={fields}
+                  defaults={defaults}
+                  onToggle={(title, newData) => {
+                    fetch(`/api/v1/services/${encodeURIComponent(title)}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(newData)
+                    })
+                      .then(res => res.json())
+                      .then(data => {
+                        if (!data.error)
+                          fetch('/api/v1/services/favorites')
+                            .then(res => res.json())
+                            .then(setFavorites);
+                      });
+                  }}
+                />
+              ))
+          ) : (
+            <Typography color="text.secondary" sx={{ m: 4 }}>No favorite services.</Typography>
+          )}
+        </Box>
     </div>
   );
 }

@@ -7,7 +7,13 @@
   "enabled": {
     "name": "Enabled",
     "description": "If true, the service will be enabled and exported to the proxy.",
-    "required": true
+    "required": true,
+    "hidden": true
+  },
+  "favorite": {
+    "name": "Favorite",
+    "description": "If true, the service will be shown on the Dashboard.",
+    "hidden": true
   },
   "manual": {
     "name": "Manual",
