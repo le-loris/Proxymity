@@ -8,7 +8,7 @@ export default function ExportButton({ onExport, text = 'Export Configuration', 
     setExporting(true);
     try {
       const res = await fetch('/api/v1/export', {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(containerName ? { containerName } : {})
       });

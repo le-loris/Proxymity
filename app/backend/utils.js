@@ -2,6 +2,17 @@ const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
 const ACTIVITY_LOG_PATH = path.join(__dirname, '.', 'db', 'activity.log');
+const DEFAULTS_PATH = path.join(__dirname, '.', 'db', 'defaults.json');
+const SERVICES_PATH = path.join(__dirname, '.', 'db', 'services.json');
+const TEMPLATES_META_PATH = path.join(__dirname, '.', 'db', 'templates.json');
+const TEMPLATES_PATH = path.join(__dirname, '.', 'db', 'templates');
+const SETTINGS_PATH = path.join(__dirname, '.', 'db', 'settings.json');
+// const OUTPUT_DIR = path.join(__dirname, '.', 'nginx', 'sites-available');
+// const ARCHIVE_DIR = path.join(__dirname, '.', 'nginx', 'sites-available-backup');
+const Docker = require('dockerode');
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+
+
 // --- Generator helpers ---
 function loadConfig(jsonFile) {
   const text = fs.readFileSync(jsonFile, 'utf8');
@@ -78,11 +89,196 @@ async function backupAndClearConfs(configData, outputDir, archiveDir) {
   }
 }
 
-async function execute(configJson, templatesJson, defaultsJson, templateDir, archiveDir, outputDir) {
+// Helper: run the backend generator and return generated files info
+async function runDefaultExport() {
+  console.log('[export] default export mode - running generator');
+  
+  // Use nginxDir from settings as root for output and archive when available
+  const settings = loadConfig(SETTINGS_PATH);
+  const nginxRoot = settings.nginxDir;
+  const archiveDir = path.join(nginxRoot, 'sites-available-backup');
+  const outputDir = path.join(nginxRoot, 'sites-available');
+
+  await execute(archiveDir, outputDir);
+  const files = fs.existsSync(outputDir) ? fs.readdirSync(outputDir).filter(f => f.endsWith('.conf')) : [];
+  return { generated: files.length, files, outputDir };
+}
+
+// Test nginx config and restart container if valid
+async function testAndRestartNginx(containerName) {
+  if (!containerName) {
+    return { nginxTest: 'No containerName set in settings.', nginxRestarted: false };
+  }
   try {
-    const configData = loadConfig(configJson);
-    const templatesMeta = loadConfig(templatesJson);
-    const defaults = loadConfig(defaultsJson);
+    const container = docker.getContainer(containerName);
+    // Run nginx -t inside the container
+    const exec = await container.exec({
+      Cmd: ['nginx', '-t'],
+      AttachStdout: true,
+      AttachStderr: true
+    });
+    const stream = await exec.start({ hijack: true, stdin: false });
+    let output = '';
+    await new Promise((resolve, reject) => {
+      stream.on('data', (chunk) => { output += chunk.toString(); });
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+    if (/syntax is ok/i.test(output) && /test is successful/i.test(output)) {
+      await container.restart();
+      return { nginxTest: output, nginxRestarted: true };
+    } else {
+      return { nginxTest: output, nginxRestarted: false };
+    }
+  } catch (nginxErr) {
+    return { nginxTest: 'Error: ' + (nginxErr.message || nginxErr), nginxRestarted: false };
+  }
+}
+
+async function callWebhook(url, config) {
+  try {
+  console.log('[export] callWebhook ->', url, config);
+  const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+    if (resp.status < 200 || resp.status >= 300) {
+      const bodyPreview = (resp.body || '').substring(0, 200);
+      const err = new Error('Webhook call failed: ' + resp.status + ' body=' + bodyPreview);
+      err.status = resp.status;
+      err.body = resp.body;
+      throw err;
+    }
+    try { return JSON.parse(resp.body || '{}'); } catch (e) { return { raw: resp.body }; }
+  } catch (e) {
+  console.error('[export] callWebhook error', e);
+    throw e;
+  }
+}
+
+async function sendPushbulletNotification(apiKey, title, body) {
+  try {
+    console.log('[export] sendPushbulletNotification ->', { title, body: body && body.substring ? body.substring(0, 200) : body });
+    const resp = await fetch('https://api.pushbullet.com/v2/pushes', {
+      method: 'POST',
+      headers: { 'Access-Token': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'note', title, body })
+    });
+    if (resp.status < 200 || resp.status >= 300) throw new Error('Pushbullet notification failed: ' + resp.status);
+    try {
+      return JSON.parse(resp.body || '{}');
+    } catch (e) {
+      return { raw: resp.body };
+    }
+  } catch (e) {
+    console.error('[export] sendPushbulletNotification error', e);
+    throw e;
+  }
+}
+
+async function exportHandler(reqBody) {
+  let time = new Date().toISOString();
+  const settings = loadConfig(SETTINGS_PATH);
+  const config = reqBody || {};
+  let result = {};
+  console.log('[export] launch requested', { time: time, settings: { action: settings.action, webhookURL: settings.webhookUrl, notifierEnabled: !!settings.notifierEnabled }, config });
+  try {
+    if (settings.action === 'webhook' && settings.webhookUrl) {
+      console.log('[export] calling webhook', settings.webhookUrl);
+      const webhookRes = await callWebhook(settings.webhookUrl, config);
+      logActivity({
+        type: 'export',
+        target: 'webhook',
+        name: settings.webhookUrl,
+        details: { config },
+        result: webhookRes
+      });
+      console.log('[export] webhook response', webhookRes);
+      result.webhook = webhookRes;
+    } else {
+      // default: run the generator to produce .conf files (delegated to helper)
+      try {
+        const exportRes = await runDefaultExport();
+        result.default = exportRes;
+        logActivity({
+          type: 'export',
+          target: 'generator',
+          name: 'runDefaultExport',
+          details: {},
+          result: exportRes
+        });
+        // Step: test nginx config and restart container if valid
+        const { nginxTest, nginxRestarted } = await testAndRestartNginx(settings.containerName);
+        result.nginxTest = nginxTest;
+        result.nginxRestarted = nginxRestarted;
+        logActivity({
+          type: 'nginx',
+          target: 'container',
+          name: settings.containerName,
+          details: { test: nginxTest },
+          result: { restarted: nginxRestarted }
+        });
+        console.log('[export] nginx test result', nginxTest, 'restarted:', nginxRestarted);
+      } catch (genErr) {
+        logActivity({
+          type: 'error',
+          target: 'generator',
+          name: 'runDefaultExport',
+          details: {},
+          result: { error: genErr.message || String(genErr) }
+        });
+        console.error('[export] generator error', genErr);
+        throw genErr;
+      }
+    }
+    //exportState.status = 'success';
+    console.log('[export] export succeeded');
+    // Send notification if enabled
+    if (settings.notifierEnabled && settings.notifierApiKey) {
+      try {
+        console.log('[export] sending pushbullet notification');
+        const notifRes = await sendPushbulletNotification(
+          settings.notifierApiKey,
+          'Proxymity Export',
+          'Export completed successfully.'
+        );
+        logActivity({
+          type: 'notification',
+          target: 'pushbullet',
+          name: 'Export completed',
+          details: {},
+          result: notifRes
+        });
+        console.log('[export] notification response', notifRes);
+        result.notification = 'Notification sent';
+      } catch (notifErr) {
+        logActivity({
+          type: 'error',
+          target: 'pushbullet',
+          name: 'Export notification',
+          details: {},
+          result: { error: notifErr.message || String(notifErr) }
+        });
+        console.error('[export] notification failed', notifErr);
+        result.notification = 'Notification failed: ' + notifErr.message;
+      }
+    }
+    return { success: true, ...result };
+  } catch (e) {
+    logActivity({
+      type: 'error',
+      target: 'export',
+      name: 'launch',
+      details: {},
+      result: { error: e.message || String(e) }
+    });
+    console.error('[export] error during export', exportState.lastError);
+    return { success: false, error: e.message || String(e) };
+  }
+}
+
+async function execute(archiveDir, outputDir) {
+  try {
+    const configData = loadConfig(SERVICES_PATH);
+    const templatesMeta = loadConfig(TEMPLATES_META_PATH);
+    const defaults = loadConfig(DEFAULTS_PATH);
     await backupAndClearConfs(configData, outputDir, archiveDir);
     for (const [serviceName, serviceData] of Object.entries(configData)) {
         const manual = (typeof serviceData.manual !== 'undefined') ? serviceData.manual : (defaults && defaults.manual);
@@ -101,7 +297,7 @@ async function execute(configJson, templatesJson, defaultsJson, templateDir, arc
             console.log(`${serviceName} has no template/model defined. Skipping.`);
             continue;
         }
-        const nginxConf = generateNginxConfig(serviceName, finalConfig, templateDir, templatesMeta);
+        const nginxConf = generateNginxConfig(serviceName, finalConfig, TEMPLATES_PATH, templatesMeta);
         const group = finalConfig.group || 'None';
         const outputFilename = `${serviceName}.conf`;
         const outputPath = path.join(outputDir, outputFilename);
@@ -171,9 +367,11 @@ module.exports = {
   syncDbDefaults,
   logActivity,
   ACTIVITY_LOG_PATH,
-  loadConfig,
-  mergeDefaults,
-  generateNginxConfig,
-  backupAndClearConfs,
-  execute
+  //loadConfig,
+  //mergeDefaults,
+  //generateNginxConfig,
+  //backupAndClearConfs,
+  //execute,
+  //runDefaultExport
+  exportHandler
 };
