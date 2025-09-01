@@ -17,6 +17,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import LayersIcon from '@mui/icons-material/Layers';
 import './App.css';
+import Logo from '../public/logo.svg';
 
 import ServicesPage from './pages/ServicesPage';
 import TemplatesPage from './pages/TemplatesPage';
@@ -60,6 +61,7 @@ function AppContent() {
           <IconButton edge="start" color="inherit" aria-label="menu" onClick={() => setDrawerOpen(true)} sx={{ mr: 2 }}>
             <MenuIcon />
           </IconButton>
+            <img src={Logo} alt="Proxymity Logo" style={{ height: 48, marginRight: 12 }} />
           <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 700, fontFamily: 'Inter, Roboto, Arial, sans-serif' }}>
             {screen === 'dashboard' && 'Proxymity - Dashboard'}
             {screen === 'services' && 'Proxymity - Services'}
