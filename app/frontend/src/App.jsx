@@ -94,7 +94,7 @@ function AppContent() {
       </Drawer>
 
       {/* Main content by route */}
-      <div style={{ paddingTop: 72, boxSizing: 'border-box', background: 'inherit' }}>
+      <div style={{ paddingTop: 18, boxSizing: 'border-box', background: 'inherit' }}>
         <Routes>
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
