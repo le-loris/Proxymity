@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ServiceCard from '../components/ServiceCard';
 import AddCard from '../components/AddCard';
 import ServiceForm from '../components/ServiceForm';
+import ServiceRow from '../components/ServiceRow';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Stack } from '@mui/material';
 
 function ServicesPage() {
   const [services, setServices] = useState([]);
@@ -14,7 +16,8 @@ function ServicesPage() {
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
   const [editName, setEditName] = useState("");
-
+  const [displayMode, setDisplayMode] = useState('card'); // 'card' or 'list'
+  
   useEffect(() => {
     try{
       fetch('/api/v1/services')
@@ -76,7 +79,7 @@ function ServicesPage() {
         .catch(() => setFormError("Network error"))
         .finally(() => setFormLoading(false));
     } else if (formMode === 'edit') {
-      fetch(`/api/v1/services/${encodeURIComponent(editName)}`, {
+     fetch(`/api/v1/services/${encodeURIComponent(editName)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -132,48 +135,91 @@ function ServicesPage() {
 
   return (
     <>
-      <div className="card"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}>
-        <ServiceCard
-          key={"Defaults"}
-          title={"Defaults"}
-          data={defaults}
-          onEdit={handleEdit}
-          fields={fields}
-        />
-        {Object.entries(services)
-          .sort(([aName], [bName]) => aName.localeCompare(bName))
-          .map(([name, service], index) => (
-            <ServiceCard
-              key={name}
-              title={name}
-              data={service}
-              onEdit={handleEdit}
-              onToggle={(title, newData) => {
-                fetch(`/api/v1/services/${encodeURIComponent(title)}`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(newData)
-                })
-                  .then(res => res.json())
-                  .then(data => {
-                    if (!data.error)
-                      fetch('/api/v1/services')
+    <Button variant={displayMode === 'list' ? 'contained' : 'outlined'} onClick={() => setDisplayMode('list')}>List View</Button>
+      {displayMode === 'card' ? (
+        <div className="card"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          }}>
+          <ServiceCard
+            key={"Defaults"}
+            title={"Defaults"}
+            data={defaults}
+            onEdit={handleEdit}
+            fields={fields}
+          />
+          {Object.entries(services)
+            .sort(([aName], [bName]) => aName.localeCompare(bName))
+            .map(([name, service], index) => (
+              <ServiceCard
+                key={name}
+                title={name}
+                data={service}
+                onEdit={handleEdit}
+                onToggle={(title, newData) => {
+                  fetch(`/api/v1/services/${encodeURIComponent(title)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newData)
+                  })
+                    .then(res => res.json())
+                    .then(data => {
+                      if (!data.error)
+                        fetch('/api/v1/services')
+                          .then(res => res.json())
+                          .then(setServices);
+                    });
+                }}
+                fields={fields}
+                templates={templates}
+                defaults={defaults}
+              />
+            ))}
+          <AddCard onClick={handleAdd} type="service" />
+        </div>
+      ) : (
+        <TableContainer component={Paper} sx={{ maxWidth: 900, margin: '0 auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{borderBottom: '3px solid #e0e0e0'}}>
+                <TableCell sx={{ fontFamily: 'Inter, Roboto, Arial, sans-serif', fontWeight: 'bold', fontSize: '1.15rem' }}>Service</TableCell>
+                <TableCell sx={{ fontFamily: 'Inter, Roboto, Arial, sans-serif', fontWeight: 'bold', fontSize: '1.15rem' }}>External URL</TableCell>
+                <TableCell sx={{ fontFamily: 'Inter, Roboto, Arial, sans-serif', fontWeight: 'bold', fontSize: '1.15rem' }}>Endpoint</TableCell>
+                <TableCell sx={{ fontFamily: 'Inter, Roboto, Arial, sans-serif', fontWeight: 'bold', fontSize: '1.15rem' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries(services)
+                .sort(([aName], [bName]) => aName.localeCompare(bName))
+                .map(([name, service]) => (
+                  <ServiceRow
+                    key={name}
+                    name={name}
+                    data={service}
+                    defaults={defaults}
+                    onEdit={handleEdit}
+                    onToggle={(title, newData) => {
+                      fetch(`/api/v1/services/${encodeURIComponent(title)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newData)
+                      })
                         .then(res => res.json())
-                        .then(setServices);
-                  });
-              }}
-              fields={fields}
-              templates={templates}
-              defaults={defaults}
-            />
-          ))}
-        <AddCard onClick={handleAdd} type="service" />
-      </div>
+                        .then(data => {
+                          if (!data.error)
+                            fetch('/api/v1/services')
+                              .then(res => res.json())
+                              .then(setServices);
+                        });
+                    }}
+                  />
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
       <ServiceForm
         open={formOpen}
         mode={formMode}

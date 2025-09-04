@@ -269,7 +269,7 @@ async function exportHandler(reqBody) {
       details: {},
       result: { error: e.message || String(e) }
     });
-    console.error('[export] error during export', exportState.lastError);
+    console.error('[export] error during export', e.message);
     return { success: false, error: e.message || String(e) };
   }
 }
