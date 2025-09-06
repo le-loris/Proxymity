@@ -11,6 +11,7 @@ utils.syncDbDefaults();
 // Chargement des routes API
 const servicesRouter = require('./routes/v1/services');
 const templatesRouter = require('./routes/v1/templates');
+const certsRouter = require('./routes/v1/certs');
 const metaRouter = require('./routes/v1/meta');
 const settingsRouter = require('./routes/v1/settings');
 const exportRouter = require('./routes/v1/export');
@@ -25,6 +26,7 @@ app.use(bodyParser.json());
 // Utilisation des routes API
 app.use('/api/v1/services', servicesRouter);
 app.use('/api/v1/templates', templatesRouter);
+app.use('/api/v1/certs', certsRouter);
 app.use('/api/v1/meta', metaRouter);
 app.use('/api/v1/settings', settingsRouter);
 app.use('/api/v1/export', exportRouter);

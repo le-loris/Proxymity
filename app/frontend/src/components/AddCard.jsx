@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
 
 function AddCard({ onClick, type = 'service' }) {
-  const tooltip = type === 'template' ? 'Add template' : 'Add service';
+  const tooltip = `Add ${type}`;
   return (
     <Tooltip title={tooltip}>
       <Paper

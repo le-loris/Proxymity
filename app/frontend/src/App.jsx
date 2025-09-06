@@ -16,11 +16,13 @@ import Typography from '@mui/material/Typography';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import LayersIcon from '@mui/icons-material/Layers';
+import SecurityIcon from '@mui/icons-material/Security';
 import './App.css';
 import Logo from '../public/logo.svg';
 
 import ServicesPage from './pages/ServicesPage';
 import TemplatesPage from './pages/TemplatesPage';
+import CertsPage from './pages/CertsPage';
 import DashboardPage from './pages/DashboardPage';
 import NginxStatus from './components/NginxStatus';
 
@@ -32,6 +34,7 @@ function AppContent() {
   let screen = 'dashboard';
   if (path.startsWith('/services')) screen = 'services';
   else if (path.startsWith('/templates')) screen = 'templates';
+  else if (path.startsWith('/certs')) screen = 'certs';
 
   const darkTheme = createTheme({
     palette: {
@@ -63,9 +66,10 @@ function AppContent() {
           </IconButton>
             <img src={Logo} alt="Proxymity Logo" style={{ height: 48, marginRight: 12 }} />
           <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 700, fontFamily: 'Inter, Roboto, Arial, sans-serif' }}>
-            {screen === 'dashboard' && 'Proxymity - Dashboard'}
+            {screen === 'dashboard' && 'Proxymity'}
             {screen === 'services' && 'Proxymity - Services'}
             {screen === 'templates' && 'Proxymity - Templates'}
+            {screen === 'certs' && 'Proxymity - Certificates'}
           </Typography>
           <NginxStatus />
         </Toolbar>
@@ -90,14 +94,21 @@ function AppContent() {
               <ListItemText primary="Templates" />
             </ListItemButton>
           </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton selected={screen === 'certs'} onClick={() => { navigate('/certs'); setDrawerOpen(false); }}>
+              <ListItemIcon><SecurityIcon /></ListItemIcon>
+              <ListItemText primary="Certificates" />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Drawer>
 
       {/* Main content by route */}
-      <div style={{ paddingTop: 18, boxSizing: 'border-box', background: 'inherit' }}>
+      <div style={{ width: '90vw', paddingTop: 18, boxSizing: 'border-box', background: 'inherit' }}>
         <Routes>
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
+          <Route path="/certs" element={<CertsPage />} />
           <Route path="/" element={<DashboardPage />} />
         </Routes>
       </div>
