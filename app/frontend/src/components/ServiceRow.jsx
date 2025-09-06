@@ -40,9 +40,7 @@ function ServiceRow({ name, data, defaults, onEdit, onToggle }) {
                     <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
                 ) : '—'}
             </TableCell>
-            <TableCell>{internal ? (
-                <a href={internal} target="_blank" rel="noopener noreferrer">{internal}</a>
-            ) : '—'}
+            <TableCell>{internal}
             </TableCell>
             <TableCell>
                 <IconButton size="small" onClick={() => onEdit?.(name)}>

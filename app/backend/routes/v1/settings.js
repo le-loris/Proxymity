@@ -110,4 +110,26 @@ router.get('/status', async (req, res) => {
     res.status(500).json({ running: false, status: '?', color: 'warning', containerName: '?', error: e.message });
   }
 });
+
+// GET display mode
+router.get('/display_mode', (req, res) => {
+  loadSettings();
+  const mode = settingsCache.display_mode || 'grid';
+  res.json({ mode });
+});
+
+// POST display mode
+router.post('/display_mode', (req, res) => {
+  const { mode } = req.body;
+  if (mode !== 'grid' && mode !== 'table') {
+    return res.status(400).json({ success: false, error: 'Invalid mode' });
+  }
+  loadSettings();
+  settingsCache.display_mode = mode;
+  fs.writeFile(SETTINGS_PATH, JSON.stringify(settingsCache, null, 2), err => {
+    if (err) return res.status(500).json({ success: false, error: 'Write error' });
+    res.json({ success: true, mode });
+  });
+});
+
 module.exports = router;

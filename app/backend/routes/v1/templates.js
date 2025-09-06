@@ -7,7 +7,8 @@ let templatesContent  = {};
 
 function loadTemplates() {
   try {
-    const rawTemplates = require(TEMPLATES_PATH);
+    const raw = fs.readFileSync(TEMPLATES_PATH, 'utf8');
+    const rawTemplates = JSON.parse(raw);
     templatesContent = {};
     Object.entries(rawTemplates).forEach(([name, tpl]) => {
       let text = '';

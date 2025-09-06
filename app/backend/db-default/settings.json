@@ -4,5 +4,6 @@
     "webhookURL" : "",
     "nginxDir": "/app/nginx",
     "notifierEnabled" : false,
-    "notifierApiKey": ""
+    "notifierApiKey": "",
+    "display_mode": "grid"
 }

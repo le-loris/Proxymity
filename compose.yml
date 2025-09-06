@@ -17,4 +17,4 @@ services:
       - "8443:8443"
     volumes:
       - ./nginx:/etc/nginx/conf.d
-    
+  

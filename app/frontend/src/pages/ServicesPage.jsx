@@ -18,10 +18,14 @@ function ServicesPage() {
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
   const [editName, setEditName] = useState("");
-  const [displayMode, setDisplayMode] = useState('card'); // 'card' or 'list'
-  
+  const [displayMode, setDisplayMode] = useState('grid'); // 'grid' or 'table'
+
+  // Load persistent display mode from backend
   useEffect(() => {
-    try{
+    try {
+      fetch('/api/v1/settings/display_mode')
+        .then(res => res.json())
+        .then(data => setDisplayMode(data.mode));
       fetch('/api/v1/services')
         .then((res) => res.json())
         .then((data) => setServices(data));
@@ -35,8 +39,20 @@ function ServicesPage() {
       fetch('/api/v1/templates')
         .then(res => res.json())
         .then(data => setTemplates(data))
-    }catch(e){console.log("Error fetching data:", e);}
+    } catch(e) { console.log("Error fetching data:", e); }
+    console.log("ServicesPage displayMode =", displayMode);
   }, []);
+
+  // Persist display mode to backend
+  const handleDisplayModeChange = (mode) => {
+    setDisplayMode(mode);
+    const backendMode = mode;
+    fetch('/api/v1/settings/display_mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: backendMode })
+    });
+  };
 
   const handleEdit = (serviceName) => {
     let serviceData = services[serviceName];
@@ -137,23 +153,23 @@ function ServicesPage() {
 
   return (
     <div style={{ position: 'relative', minWidth: '90vw', paddingTop:'2rem', minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ position: 'absolute', top: 12, right: 32, zIndex: 2, display: 'flex', gap: 4, alignItems: 'center' }}>
+      <div style={{ position: 'absolute', marginTop: '1em', top: 12, right: 32, zIndex: 2, display: 'flex', gap: 4, alignItems: 'center' }}>
         <IconButton
-          onClick={() => setDisplayMode('card')}
-          sx={{ color: displayMode === 'card' ? '#fff' : '#888' }}
+          onClick={() => handleDisplayModeChange('grid')}
+          sx={{ color: displayMode === 'grid' ? '#fff' : '#888' }}
         >
           <GridViewIcon />
         </IconButton>
         <div style={{ width: 1, height: 28, background: '#888', opacity: 0.5, borderRadius: 2 }} />
         <IconButton
-          onClick={() => setDisplayMode('list')}
-          sx={{ color: displayMode === 'list' ? '#fff' : '#888' }}
+          onClick={() => handleDisplayModeChange('table')}
+          sx={{ color: displayMode === 'table' ? '#fff' : '#888' }}
         >
           <TableRowsIcon />
         </IconButton>
       </div>
       <div style={{ width: '90vw', margin: '0 auto', marginTop: 48 }}>
-        {displayMode === 'card' ? (
+        {displayMode === 'grid' ? (
           <div className="card"
             style={{
               display: 'flex',
@@ -234,6 +250,11 @@ function ServicesPage() {
                       }}
                     />
                   ))}
+                <TableRow sx={{ cursor: 'pointer', borderBottom: '3px solid #e0e0e0' }} onClick={handleAdd}>
+                  <TableCell colSpan={4} align="center" sx={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1976d2' }}>
+                    +
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </TableContainer>

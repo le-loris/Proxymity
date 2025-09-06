@@ -78,7 +78,8 @@ function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit
             />
             <div>
               <div style={{ fontWeight: 500, marginBottom: 4, color: '#bbb' }}>Configuration</div>
-              <Editor
+              <div style={{overflow:'auto', maxHeight: '400px'}}>
+                <Editor
                 value={form.text ?? ''}
                 onValueChange={code => setForm(f => ({ ...f, text: code }))}
                 highlight={code => Prism.highlight(code, Prism.languages.ini, 'ini')}
@@ -89,8 +90,7 @@ function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit
                   background: '#232323',
                   borderRadius: 6,
                   minHeight: 180,
-                  maxHeight: 400,
-                  overflow: 'auto',
+                  height: 'auto',
                   border: '1px solid #444',
                   color: '#fff',
                   outline: 'none',
@@ -100,6 +100,8 @@ function TemplateForm({ open, mode = 'add', initialData = {}, onCancel, onSubmit
                 name="text"
                 disabled={loading}
               />
+              </div>
+              
             </div>
             <div style={{ color: 'red', minHeight: 20 }}>{localError || error}</div>
           </Stack>
