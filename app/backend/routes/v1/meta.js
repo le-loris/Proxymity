@@ -3,24 +3,31 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const fields    = require(path.join(__dirname, '../../', 'db', 'fields.json'));
-const defaults  = require(path.join(__dirname, '../../', 'db', 'defaults.json'));
+const DEFAULTS_PATH = path.join(__dirname, '../../db/defaults.json');
+const defaults  = require(DEFAULTS_PATH);
 const services  = require(path.join(__dirname, '../../', 'db', 'services.json'));
 const templates = require(path.join(__dirname, '../../', 'db', 'templates.json'));
 const { ACTIVITY_LOG_PATH, logActivity } = require('../../utils');
 
-// GET/POST defaults
+// GET defaults
 router.get('/defaults', (req, res) => {
-    res.json(defaults);
-    console.log("Defaults", defaults);
+  const rawdata = fs.readFileSync(DEFAULTS_PATH, 'utf8');
+  res.json(JSON.parse(rawdata));
+  console.log("Defaults", JSON.parse(rawdata));
 });
-// router.post('/defaults', (req, res) => {
-//   try {
-//     setDefaults(req.body);
-//     res.json({ success: true });
-//   } catch (e) {
-//     res.status(500).json({ success: false, error: e.message });
-//   }
-// });
+
+// POST defaults
+router.post('/defaults', (req, res) => {
+  try {
+    const newDefaults = req.body;
+    fs.writeFileSync(DEFAULTS_PATH, JSON.stringify(newDefaults, null, 2), 'utf8');
+    // Reload and return updated defaults
+    const updatedDefaults = JSON.parse(fs.readFileSync(DEFAULTS_PATH, 'utf8'));
+    res.json({ success: true, defaults: updatedDefaults });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // GET fields
 router.get('/fields', (req, res) => {

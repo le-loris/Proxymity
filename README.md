@@ -24,7 +24,7 @@ UI overview
    - Open this windows by clicking the NGINX state widget (top-left) then clicking `SET UP`
    - Parameters:
      - NGINX Container table: lists Docker containers. Click a row to select the container used as a reference.
-     - NGINX Directory: field for the root path where generated configurations and backups will be placed (in subfolders `sites-available` and `sites-available-backup`).
+     - NGINX Directory: field for the `conf.d` path where generated configurations and backups will be placed (backups go in the `backup` subfolder).
      - Export mode : choose `Default` (run the local generator) or `Webhook` (Call to an external deployment service).
      - Webhook URL: full endpoint used when in Webhook export mode.
      - Notifier: You can provide your Pushbullet API key and test it.
@@ -39,7 +39,8 @@ Export flow (what happens when you trigger an export)
 - If Export Mode is `Default`: the backend runs the generator which:
   - Loads the services manifest and templates metadata.
   - Merges in defaults (if provided).
-  - Archives existing `.conf` files in `sites-available-backup` and writes new `.conf` files into `sites-available` under the configured NGINX directory.
+  - Writes Certificates in `conf.d/ssl/`
+  - Archives existing `.conf` files in `conf.d/backups/` and writes new `.conf` files into `conf.d` under the configured NGINX directory.
   - Skips services marked `manual` or those without a model/template.
 
 Minimal run instructions

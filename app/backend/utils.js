@@ -7,8 +7,6 @@ const SERVICES_PATH = path.join(__dirname, '.', 'db', 'services.json');
 const TEMPLATES_META_PATH = path.join(__dirname, '.', 'db', 'templates.json');
 const TEMPLATES_PATH = path.join(__dirname, '.', 'db', 'templates');
 const SETTINGS_PATH = path.join(__dirname, '.', 'db', 'settings.json');
-// const OUTPUT_DIR = path.join(__dirname, '.', 'nginx', 'sites-available');
-// const ARCHIVE_DIR = path.join(__dirname, '.', 'nginx', 'sites-available-backup');
 const Docker = require('dockerode');
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
@@ -49,13 +47,17 @@ function generateNginxConfig(serviceName, config, templateDir, templatesMeta) {
   const portStr = config.port ? `:${config.port}` : '';
   const subdomain = (config.subdomain === undefined || config.subdomain === null || config.subdomain === 'None') ? '' : (config.subdomain === '' ? '' : config.subdomain + '.');
   const https = config.https ? 'https' : 'http';
+  const cert = config.cert ? `ssl_certificate \t\t\"conf.d/ssl/${config.cert}.crt\"` : '';
+  const key = config.cert ? `ssl_certificate_key \t\"conf.d/ssl/${config.cert}.key\"` : '';
   let nginxConfig = template
     .replace(/\$\{SERVICE_NAME\}/g, serviceName)
     .replace(/\$\{DOMAIN\}/g, config.domain || '')
     .replace(/\$\{SUBDOMAIN\}/g, subdomain)
     .replace(/\$\{PORT\}/g, portStr)
     .replace(/\$\{IP\}/g, config.ip || '')
-    .replace(/\$\{HTTPS\}/g, https);
+    .replace(/\$\{HTTPS\}/g, https)
+    .replace(/\$\{CERT\}/g, cert)
+    .replace(/\$\{KEY\}/g, key);
   return nginxConfig;
 }
 
@@ -92,15 +94,17 @@ async function backupAndClearConfs(configData, outputDir, archiveDir) {
 // Helper: run the backend generator and return generated files info
 async function runDefaultExport() {
   console.log('[export] default export mode - running generator');
-  
   // Use nginxDir from settings as root for output and archive when available
   const settings = loadConfig(SETTINGS_PATH);
   const nginxRoot = settings.nginxDir;
-  const archiveDir = path.join(nginxRoot, 'sites-available-backup');
-  const outputDir = path.join(nginxRoot, 'sites-available');
-
-  await execute(archiveDir, outputDir);
+  const archiveDir = path.join(nginxRoot, 'backup');
+  const outputDir = nginxRoot;
+  const certsDir = path.join(nginxRoot, 'ssl');
+  console.log("Parameters:", { nginxRoot, archiveDir, outputDir, certsDir });
+  
+  await execute(archiveDir, outputDir, certsDir);
   const files = fs.existsSync(outputDir) ? fs.readdirSync(outputDir).filter(f => f.endsWith('.conf')) : [];
+  
   return { generated: files.length, files, outputDir };
 }
 
@@ -274,39 +278,69 @@ async function exportHandler(reqBody) {
   }
 }
 
-async function execute(archiveDir, outputDir) {
+async function execute(archiveDir, outputDir, certsDir) {
   try {
     const configData = loadConfig(SERVICES_PATH);
     const templatesMeta = loadConfig(TEMPLATES_META_PATH);
     const defaults = loadConfig(DEFAULTS_PATH);
     await backupAndClearConfs(configData, outputDir, archiveDir);
     for (const [serviceName, serviceData] of Object.entries(configData)) {
-        const manual = (typeof serviceData.manual !== 'undefined') ? serviceData.manual : (defaults && defaults.manual);
-        const enabled = (typeof serviceData.enabled !== 'undefined') ? serviceData.enabled : (defaults && defaults.enabled);
-        if (!enabled) {
-          console.log(`${serviceName} is not enabled. Skipping.`);
-          continue;
-        }
-        if (manual) {
-            console.log(`${serviceName} is marked as manual. Skipping.`);
-            continue;
-        }
-        const finalConfig = mergeDefaults(defaults, serviceData);
-        console.log(`Generating configuration for ${serviceName} : `, finalConfig, defaults);
-        if (!finalConfig.model) {
-            console.log(`${serviceName} has no template/model defined. Skipping.`);
-            continue;
-        }
-        const nginxConf = generateNginxConfig(serviceName, finalConfig, TEMPLATES_PATH, templatesMeta);
-        const group = finalConfig.group || 'None';
-        const outputFilename = `${serviceName}.conf`;
-        const outputPath = path.join(outputDir, outputFilename);
-        fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(outputPath, nginxConf + '\n\n', 'utf8');
-        console.log(`Configuration generated for ${serviceName} in ${outputFilename}`);
+      const manual = (typeof serviceData.manual !== 'undefined') ? serviceData.manual : (defaults && defaults.manual);
+      const enabled = (typeof serviceData.enabled !== 'undefined') ? serviceData.enabled : (defaults && defaults.enabled);
+      if (!enabled) {
+        console.log(`${serviceName} is not enabled. Skipping.`);
+        continue;
+      }
+      if (manual) {
+        console.log(`${serviceName} is marked as manual. Skipping.`);
+        continue;
+      }
+      const finalConfig = mergeDefaults(defaults, serviceData);
+      console.log(`Generating configuration for ${serviceName} : `, finalConfig, defaults);
+      if (!finalConfig.model) {
+        console.log(`${serviceName} has no template/model defined. Skipping.`);
+        continue;
+      }
+      const nginxConf = generateNginxConfig(serviceName, finalConfig, TEMPLATES_PATH, templatesMeta);
+      const outputFilename = `${serviceName}.conf`;
+      const outputPath = path.join(outputDir, outputFilename);
+      fs.mkdirSync(outputDir, { recursive: true });
+      fs.writeFileSync(outputPath, nginxConf + '\n\n', 'utf8');
+      console.log(`Configuration generated for ${serviceName} in ${outputFilename}`);
     }
   } catch (e) {
-    console.error('Did not execute properly :', e);
+    console.error('Did not execute configuration sync properly :', e);
+    throw e;
+  }
+
+  // --- Certificate sync ---
+  try {
+    const certsDbPath = path.join(__dirname, '.', 'db', 'certs.json');
+    if (!fs.existsSync(certsDbPath)) {
+      console.log('No certs.json found, skipping certificate sync.');
+      return;
+    }
+    const certsData = loadConfig(certsDbPath);
+    fs.mkdirSync(certsDir, { recursive: true });
+    for (const [certName, certObj] of Object.entries(certsData)) {
+      const dbCertsDir = path.join(__dirname, '.', 'db', 'certs');
+      const srcCrtPath = path.join(dbCertsDir, `${certName}.crt`);
+      const srcKeyPath = path.join(dbCertsDir, `${certName}.key`);
+      const crtPath = path.join(certsDir, `${certName}.crt`);
+      const keyPath = path.join(certsDir, `${certName}.key`);
+      
+      // Copy certificate and key files from db/certs/certPath and keyPath
+      if (!fs.existsSync(srcCrtPath) || !fs.existsSync(srcKeyPath)) {
+        console.log(`Certificate ${certName} source files not found. Skipping.`);
+        continue;
+      }
+      fs.mkdirSync(certsDir, { recursive: true });
+      fs.copyFileSync(srcCrtPath, crtPath);
+      fs.copyFileSync(srcKeyPath, keyPath);
+      console.log(`Certificate files copied for ${certName}`);
+    }
+  } catch (e) {
+    console.error('Did not execute certificates sync properly :', e);
     throw e;
   }
 }
@@ -323,7 +357,7 @@ function syncDbDefaults() {
   items.forEach(item => {
     const src = path.join(dbDefaultDir, item);
     const dest = path.join(dbDir, item);
-    if (!fs.existsSync(dest)) {
+    if (!fs.existsSync(dest) || item === 'fields.json') {
       const stat = fs.statSync(src);
       if (stat.isDirectory()) {
         fs.mkdirSync(dest);

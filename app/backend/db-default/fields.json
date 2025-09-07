@@ -35,6 +35,10 @@
     "name": "Template",
     "description": "If filled, the selected template will be used. Else, the service will be assumed to be secured on its own."
   },
+  "cert": {
+    "name": "Certificate",
+    "description": "If provided, this certificate will be used for HTTPS connections to the service. Else, you'll need to use HTTP."
+  },
   "ip": {
     "name": "IP adress",
     "description": "If provided, this IP will be used to access the service, else 127.0.0.1 will be used."

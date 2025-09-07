@@ -203,7 +203,7 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
         </Box>
         <Box mt={3}>
           <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
-            <Tooltip title="Path to your nginx sites-available directory. Click directories below to navigate." placement="right">
+            <Tooltip title="Path to your nginx conf.d directory. Click directories below to navigate." placement="right">
               <IconButton size="small" aria-label="help nginx-dir">
                 <InfoOutlined fontSize="small" />
               </IconButton>
@@ -217,7 +217,7 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
             value={nginxDir}
             onChange={(e) => setNginxDir(e.target.value)}
             fullWidth
-            //helperText="Type a path to your nginx sites-available directory; contents will appear below"
+            //helperText="Type a path to your nginx conf.d directory; contents will appear below"
             size="small"
           />
           <DirPreview nginxDir={nginxDir} setNginxDir={setNginxDir} />

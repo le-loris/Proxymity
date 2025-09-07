@@ -12,6 +12,7 @@ function ServicesPage() {
   const [defaults, setDefaults] = useState({});
   const [fields, setFields] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [certs, setCerts] = useState([]);
   const [formData, setFormData] = useState({});
   const [formMode, setFormMode] = useState('add');
   const [formOpen, setFormOpen] = useState(false);
@@ -39,6 +40,10 @@ function ServicesPage() {
       fetch('/api/v1/templates')
         .then(res => res.json())
         .then(data => setTemplates(data))
+      // load certs from backend for ServiceForm
+      fetch('/api/v1/certs')
+        .then(res => res.json())
+        .then(data => setCerts(data))
     } catch(e) { console.log("Error fetching data:", e); }
     console.log("ServicesPage displayMode =", displayMode);
   }, []);
@@ -97,7 +102,10 @@ function ServicesPage() {
         .catch(() => setFormError("Network error"))
         .finally(() => setFormLoading(false));
     } else if (formMode === 'edit') {
-     fetch(`/api/v1/services/${encodeURIComponent(editName)}`, {
+      const endpoint = editName === 'Defaults'
+        ? '/api/v1/meta/defaults'
+        : `/api/v1/services/${encodeURIComponent(editName)}`;
+      fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -109,6 +117,7 @@ function ServicesPage() {
           } else {
             // If we edited Defaults, backend returns the updated defaults in data.defaults
             if (editName === 'Defaults' && data.defaults) {
+              console.log("Updated Defaults:", data.defaults);
               setDefaults(data.defaults);
             }
             // Update services list if present
@@ -267,6 +276,7 @@ function ServicesPage() {
         fields={fields}
         defaults={defaults}
         templates={templates}
+        certs={certs}  
         onCancel={() => setFormOpen(false)}
         onSubmit={handleFormSubmit}
         onDelete={handleFormDelete}

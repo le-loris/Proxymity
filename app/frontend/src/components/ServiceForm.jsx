@@ -20,6 +20,7 @@ function ServiceForm({
   fields = {},
   defaults = {},
   templates = {},
+  certs = {},
   onCancel,
   onSubmit,
   onDelete,
@@ -118,8 +119,29 @@ function ServiceForm({
                         error={!!missing}
                       >
                         <MenuItem value=""><em>Select a Template</em></MenuItem>
-                        {Object.entries(templates).map(([tplName, tpl]) => (
-                          <MenuItem key={tplName} value={tplName}>{tplName}</MenuItem>
+                        {Object.entries(templates).map(([name, item]) => (
+                          <MenuItem key={name} value={name} title={item.description}>{name}</MenuItem>
+                        ))}
+                      </TextField>
+                    </Tooltip>
+                  ) : field === 'cert' ? (
+                    <Tooltip title={meta.description || ''} placement="right" arrow>
+                      <TextField
+                        select
+                        id={field}
+                        name={field}
+                        label={meta.name || field}
+                        value={form[field] ?? ''}
+                        onChange={handleChange}
+                        fullWidth
+                        size="small"
+                        disabled={loading}
+                        variant="outlined"
+                        error={!!missing}
+                      >
+                        <MenuItem value=""><em>Select a Certificate</em></MenuItem>
+                        {Object.entries(certs).map(([name, item]) => (
+                          <MenuItem key={name} value={name} title={item.description}>{name}</MenuItem>
                         ))}
                       </TextField>
                     </Tooltip>
