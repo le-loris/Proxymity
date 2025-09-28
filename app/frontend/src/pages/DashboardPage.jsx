@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Grid, Card, CardContent, Typography, Box, CircularProgress, Button, Stack, Divider, Alert } from '@mui/material';
 import ServiceCard from '../components/ServiceCard';
-import { Power, PowerOff, AddCircleOutline, History } from '@mui/icons-material';
+import { Power, PowerOff, History } from '@mui/icons-material';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import LayersIcon from '@mui/icons-material/Layers';
+import SecurityIcon from '@mui/icons-material/Security';
 import ExportButton from '../components/ExportButton';
+import { useNavigate } from 'react-router-dom';
 
 // Date formatting function
 const formatDate = (isoString) => {
@@ -59,6 +63,7 @@ function getActivityMessage(item) {
 // ...existing code...
 
 function DashboardPage() {
+  const navigate = useNavigate();
   const [exporting, setExporting] = useState(false);
   const [stats, setStats] = useState(null);
   const [status, setStatus] = useState(null);
@@ -203,10 +208,11 @@ function DashboardPage() {
               <Typography variant="h6">Quick Actions</Typography>
             </Box>
             <CardContent sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-              <Stack spacing={2} sx={{ width: '100%' }}>
-                <ExportButton />
-                <Button variant="outlined" startIcon={<AddCircleOutline />}>Add Service</Button>
-                <Button variant="outlined" startIcon={<AddCircleOutline />}>Add Template</Button>
+              <Stack spacing={1.5} sx={{ width: '100%' }}>
+                <ExportButton text="Launch Export" />
+                <Button variant="outlined" startIcon={<ViewListIcon />} onClick={() => navigate('/services')}>Go to Services</Button>
+                <Button variant="outlined" startIcon={<LayersIcon />} onClick={() => navigate('/templates')}>Go to Templates</Button>
+                <Button variant="outlined" startIcon={<SecurityIcon />} onClick={() => navigate('/certs')}>Go to Certificates</Button>
               </Stack>
             </CardContent>
           </Card>

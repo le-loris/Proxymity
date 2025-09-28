@@ -94,7 +94,7 @@ export default function NginxStatus() {
           <Button variant="outlined" size="small" color="primary" onClick={() => { setSetupOpen(true); setAnchorEl(null); }}>
             Set up
           </Button>
-          <ExportButton text="Export" size="small" containerName={nginx.containerName} />
+          <ExportButton text="Export" size="small"/>
         </Stack>
       </Popover>
     <SetupNginxDialog open={setupOpen} onClose={() => setSetupOpen(false)} onSelect={async (containerName, action, webhookUrl) => {

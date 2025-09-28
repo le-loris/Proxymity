@@ -33,8 +33,13 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
   const [selected, setSelected] = useState(null);
   const [action, setAction] = useState('default');
   const [webhookUrl, setWebhookUrl] = useState('');
-  const [notifierEnabled, setNotifierEnabled] = useState(false);
-  const [notifierApiKey, setNotifierApiKey] = useState('');
+  const [pushBulletEnabled, setPushBulletEnabled] = useState(false);
+  const [pushBulletApiKey, setPushBulletApiKey] = useState('');
+  const [ntfyEnabled, setNtfyEnabled] = useState(false);
+  const [ntfyServer, setNtfyServer] = useState('');
+  const [ntfyTopic, setNtfyTopic] = useState('');
+  const [ntfyId, setNtfyId] = useState('');
+  const [ntfyPassword, setNtfyPassword] = useState('');
   const [nginxDir, setNginxDir] = useState('');
   const [dirEntries, setDirEntries] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -51,8 +56,13 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       if (statusRes) {  
         setAction(statusRes.action || 'default');
         setWebhookUrl(statusRes.webhookUrl || '');
-        setNotifierEnabled(!!statusRes.notifierEnabled);
-        setNotifierApiKey(statusRes.notifierApiKey || '');
+        setPushBulletEnabled(!!statusRes.pushBulletEnabled);
+        setPushBulletApiKey(statusRes.pushBulletApiKey || '');
+        setNtfyEnabled(!!statusRes.ntfyEnabled);
+        setNtfyServer(statusRes.ntfyServer || '');
+        setNtfyTopic(statusRes.ntfyTopic || '');
+        setNtfyId(statusRes.ntfyId || '');
+        setNtfyPassword(statusRes.ntfyPassword || '');
         setNginxDir(statusRes.nginxDir || '');
         console.log('[SetupNginxDialog] containers:', containersRes);
         console.log('[SetupNginxDialog] status:', statusRes);
@@ -74,27 +84,54 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
     if (onSelect) onSelect(name, action, webhookUrl);
   };
 
-  const handleTestNotification = () => {
-    if (!notifierApiKey) return;
-    fetch('https://api.pushbullet.com/v2/pushes', {
+  const handleTestPushBullet = () => {
+    console.log('[export] sendPushBulletNotification');
+    
+    fetch('/api/v1/meta/test-notifier', {
       method: 'POST',
-      headers: {
-        'Access-Token': notifierApiKey,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: 'note',
+        "notifier": "pushbullet",
+        pushBulletApiKey,
         title: 'Proxymity Test',
-        body: 'This is a test notification from Proxymity.',
-      }),
-    })
-      .then(res => {
-        if (!res.ok) {
-          alert('Failed to send test notification.');
-        }
+        body: 'This is a test notification from Proxymity.'
       })
-      .catch(() => alert('An error occurred while sending the test notification.'));
-  };
+    }).then(res => {
+      console.log('[export] sendPushBulletNotification <-', res);
+      if(!res.ok) {
+        alert('Failed to send test notification.');
+      }
+    }).catch((res) => {
+      console.log('[export] sendPushBulletNotification error <-', res);
+      alert('An error occurred while sending the test notification.');
+    });
+  }
+
+  const handleTestNtfy = () => { 
+    console.log('[export] sendNtfyNotification ->', { ntfyServer, ntfyTopic });
+    
+    fetch('/api/v1/meta/test-notifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        "notifier": "ntfy",
+        ntfyServer,
+        ntfyTopic,
+        ntfyId,
+        ntfyPassword,
+        title: 'Proxymity Test',
+        body: 'This is a test notification from Proxymity.'
+      })
+    }).then(res => {
+      console.log('[export] sendNtfyNotification <-', res);
+      if(!res.ok) {
+        alert('Failed to send test notification.');
+      }
+    }).catch((res) => {
+      console.log('[export] sendNtfyNotification error <-', res);
+      alert('An error occurred while sending the test notification.');
+    });
+  }
 
   const handleSave = () => {
     const containerName = selected
@@ -104,8 +141,13 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
       containerName,
       action,
       webhookUrl,
-      notifierEnabled,
-      notifierApiKey,
+      pushBulletEnabled,
+      pushBulletApiKey,
+      ntfyEnabled,
+      ntfyServer,
+      ntfyTopic,
+      ntfyId,
+      ntfyPassword,
       nginxDir
     };
     console.log('[SetupNginxDialog] Saving settings:', payload);
@@ -266,27 +308,27 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
                   </IconButton>
                 </Tooltip>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mr: 1 }}>
-                  Notifier
+                  Pushbullet
                 </Typography>
               </Box>
               <Switch
-                checked={notifierEnabled}
-                onChange={(e) => setNotifierEnabled(e.target.checked)}
+                checked={pushBulletEnabled}
+                onChange={(e) => setPushBulletEnabled(e.target.checked)}
                 size="small"
               />
             </Stack>
             <Button
               variant="contained"
-              onClick={handleTestNotification}
-              disabled={!notifierEnabled || !notifierApiKey}
+              onClick={handleTestPushBullet}
+              disabled={!pushBulletEnabled || !pushBulletApiKey}
               size="small"
               sx={{
-                bgcolor: (!notifierEnabled || !notifierApiKey) ? undefined : 'green',
+                bgcolor: (!pushBulletEnabled || !pushBulletApiKey) ? undefined : 'green',
                 color: 'white',
                 height: 32,
                 minWidth: 72,
                 '&:hover': {
-                  bgcolor: (!notifierEnabled || !notifierApiKey) ? undefined : 'darkgreen',
+                  bgcolor: (!pushBulletEnabled || !pushBulletApiKey) ? undefined : 'darkgreen',
                 },
               }}
             >
@@ -297,17 +339,104 @@ export default function SetupNginxDialog({ open, onClose, onSelect }) {
         <Box mt={1}>
           <TextField
             label="Pushbullet API Key"
-            value={notifierApiKey}
-            onChange={(e) => setNotifierApiKey(e.target.value)}
+            value={pushBulletApiKey}
+            onChange={(e) => setPushBulletApiKey(e.target.value)}
             fullWidth
-            disabled={!notifierEnabled}
+            disabled={!pushBulletEnabled}
             type="password"
             InputProps={{
-              style: { backgroundColor: notifierEnabled ? undefined : '#606060' }
+              style: { backgroundColor: pushBulletEnabled ? undefined : '#606060' }
             }}
           />
         </Box>
-      </DialogContent>
+        <Box mt={3}>
+          <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box display="flex" alignItems="center">
+                <Tooltip title="Enable Ntfy notifier and provide your Ntfy Server, topic, ID and password in the field below." placement="right">
+                  <IconButton size="small" aria-label="help notifier">
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mr: 1 }}>
+                  Ntfy
+                </Typography>
+              </Box>
+              <Switch
+                checked={ntfyEnabled}
+                onChange={(e) => setNtfyEnabled(e.target.checked)}
+                size="small"
+              />
+            </Stack>
+            <Button
+              variant="contained"
+              onClick={handleTestNtfy}
+              disabled={!ntfyEnabled || !ntfyServer || !ntfyTopic || !ntfyId || !ntfyPassword}
+              size="small"
+              sx={{
+                bgcolor: ( !ntfyEnabled || !ntfyServer || !ntfyTopic || !ntfyId || !ntfyPassword ) ? undefined : 'green',
+                color: 'white',
+                height: 32,
+                minWidth: 72,
+                '&:hover': {
+                  bgcolor: (!ntfyEnabled || !ntfyServer || !ntfyTopic || !ntfyId || !ntfyPassword) ? undefined : 'darkgreen',
+                },
+              }}
+            >
+              Test
+            </Button>
+          </Stack>
+        </Box>
+        <Box mt={1}>
+          <TextField
+            label="Ntfy Server"
+            value={ntfyServer}
+            onChange={(e) => setNtfyServer(e.target.value)}
+            fullWidth
+            disabled={!ntfyEnabled}
+            InputProps={{
+              style: { backgroundColor: ntfyEnabled ? undefined : '#606060' }
+            }}
+          />
+        </Box>
+        <Box mt={1}>
+          <TextField
+            label="Ntfy Topic"
+            value={ntfyTopic}
+            onChange={(e) => setNtfyTopic(e.target.value)}
+            fullWidth
+            disabled={!ntfyEnabled}
+            InputProps={{
+              style: { backgroundColor: ntfyEnabled ? undefined : '#606060' }
+            }}
+          />
+        </Box>
+        <Box mt={1}>
+          <TextField
+            label="Ntfy ID"
+            value={ntfyId}
+            onChange={(e) => setNtfyId(e.target.value)}
+            fullWidth
+            disabled={!ntfyEnabled}
+            InputProps={{
+              style: { backgroundColor: ntfyEnabled ? undefined : '#606060' }
+            }}
+          />
+        </Box>
+      <Box mt={1}>
+          <TextField
+            label="Ntfy Password"
+            value={ntfyPassword}
+            onChange={(e) => setNtfyPassword(e.target.value)}
+            type="password"
+            fullWidth
+            disabled={!ntfyEnabled}
+            InputProps={{
+              style: { backgroundColor: ntfyEnabled ? undefined : '#606060' }
+            }}
+          />
+      </Box>
+    </DialogContent>
       <DialogActions>
         <Button onClick={handleSave} variant="contained">
           Save

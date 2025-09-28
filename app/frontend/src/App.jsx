@@ -75,32 +75,37 @@ function AppContent() {
         </Toolbar>
       </AppBar>
       <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <List sx={{ width: 220 }}>
-          <ListItem disablePadding>
-            <ListItemButton selected={screen === 'dashboard'} onClick={() => { navigate('/'); setDrawerOpen(false); }}>
-              <ListItemIcon><DashboardIcon /></ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton selected={screen === 'services'} onClick={() => { navigate('/services'); setDrawerOpen(false); }}>
-              <ListItemIcon><ViewListIcon /></ListItemIcon>
-              <ListItemText primary="Services" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton selected={screen === 'templates'} onClick={() => { navigate('/templates'); setDrawerOpen(false); }}>
-              <ListItemIcon><LayersIcon /></ListItemIcon>
-              <ListItemText primary="Templates" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton selected={screen === 'certs'} onClick={() => { navigate('/certs'); setDrawerOpen(false); }}>
-              <ListItemIcon><SecurityIcon /></ListItemIcon>
-              <ListItemText primary="Certificates" />
-            </ListItemButton>
-          </ListItem>
-        </List>
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <List sx={{ width: 220 }}>
+            <ListItem disablePadding>
+              <ListItemButton selected={screen === 'dashboard'} onClick={() => { navigate('/'); setDrawerOpen(false); }}>
+                <ListItemIcon><DashboardIcon /></ListItemIcon>
+                <ListItemText primary="Dashboard" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton selected={screen === 'services'} onClick={() => { navigate('/services'); setDrawerOpen(false); }}>
+                <ListItemIcon><ViewListIcon /></ListItemIcon>
+                <ListItemText primary="Services" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton selected={screen === 'templates'} onClick={() => { navigate('/templates'); setDrawerOpen(false); }}>
+                <ListItemIcon><LayersIcon /></ListItemIcon>
+                <ListItemText primary="Templates" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton selected={screen === 'certs'} onClick={() => { navigate('/certs'); setDrawerOpen(false); }}>
+                <ListItemIcon><SecurityIcon /></ListItemIcon>
+                <ListItemText primary="Certificates" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+          <Typography variant="caption" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+            Version: 1.0.0
+          </Typography>
+        </div>
       </Drawer>
 
       {/* Main content by route */}

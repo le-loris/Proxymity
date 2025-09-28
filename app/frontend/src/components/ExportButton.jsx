@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from '@mui/material/Button';
 import { RocketLaunch } from '@mui/icons-material';
 
-export default function ExportButton({ onExport, text = 'Export Configuration', size = 'medium', containerName }) {
+export default function ExportButton({ onExport, text = 'Export Configuration', size = 'medium'}) {
   const [exporting, setExporting] = useState(false);
   const handleExport = async () => {
     setExporting(true);
@@ -10,7 +10,7 @@ export default function ExportButton({ onExport, text = 'Export Configuration', 
       const res = await fetch('/api/v1/export', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(containerName ? { containerName } : {})
+        body: JSON.stringify({})
       });
       const data = await res.json();
       if (!res.ok) {

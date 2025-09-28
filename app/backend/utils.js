@@ -177,12 +177,37 @@ async function sendPushbulletNotification(apiKey, title, body) {
   }
 }
 
+async function sendNtfyNotification(server, topic, user, password, title, body) {
+  try {
+    console.log('[export] sendNtfyNotification ->', { server, topic, title, body: body && body.substring ? body.substring(0, 200) : body });
+    const url = `${server.replace(/\/$/, '')}/${encodeURIComponent(topic)}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain',
+        'Title': title,
+        ...(user && password ? { 'Authorization': 'Basic ' + btoa(user + ':' + password) } : {} )
+      },
+      body: body
+    });
+    if (resp.status < 200 || resp.status >= 300) throw new Error('Ntfy notification failed: ' + resp.status);
+    try {
+      return await resp.json();
+    } catch (e) {
+      return { raw: await resp.text() };
+    }
+  } catch (e) {
+    console.error('[export] sendNtfyNotification error', e);
+    throw e;
+  }
+}
+
 async function exportHandler(reqBody) {
   let time = new Date().toISOString();
   const settings = loadConfig(SETTINGS_PATH);
   const config = reqBody || {};
   let result = {};
-  console.log('[export] launch requested', { time: time, settings: { action: settings.action, webhookURL: settings.webhookUrl, notifierEnabled: !!settings.notifierEnabled }, config });
+  console.log('[export] launch requested', { time: time, settings: { action: settings.action, webhookURL: settings.webhookUrl, pushBulletEnabled: !!settings.pushBulletEnabled }, config });
   try {
     if (settings.action === 'webhook' && settings.webhookUrl) {
       console.log('[export] calling webhook', settings.webhookUrl);
@@ -235,11 +260,11 @@ async function exportHandler(reqBody) {
     //exportState.status = 'success';
     console.log('[export] export succeeded');
     // Send notification if enabled
-    if (settings.notifierEnabled && settings.notifierApiKey) {
+    if (settings.pushBulletEnabled && settings.pushBulletApiKey) {
       try {
         console.log('[export] sending pushbullet notification');
         const notifRes = await sendPushbulletNotification(
-          settings.notifierApiKey,
+          settings.pushBulletApiKey,
           'Proxymity Export',
           'Export completed successfully.'
         );
@@ -256,6 +281,38 @@ async function exportHandler(reqBody) {
         logActivity({
           type: 'error',
           target: 'pushbullet',
+          name: 'Export notification',
+          details: {},
+          result: { error: notifErr.message || String(notifErr) }
+        });
+        console.error('[export] notification failed', notifErr);
+        result.notification = 'Notification failed: ' + notifErr.message;
+      }
+    }
+    if (settings.ntfyEnabled && settings.ntfyServer && settings.ntfyTopic) {
+      try {
+        console.log('[export] sending ntfy notification');
+        const notifRes = await sendNtfyNotification(
+          settings.ntfyServer,
+          settings.ntfyTopic,
+          settings.ntfyId,
+          settings.ntfyPassword,
+          'Proxymity Export',
+          'Export completed successfully.'
+        );
+        logActivity({
+          type: 'notification',
+          target: 'ntfy',
+          name: 'Export completed',
+          details: {},
+          result: notifRes
+        });
+        console.log('[export] notification response', notifRes);
+        result.notification = 'Notification sent';
+      } catch (notifErr) {
+        logActivity({
+          type: 'error',
+          target: 'ntfy',
           name: 'Export notification',
           details: {},
           result: { error: notifErr.message || String(notifErr) }
@@ -401,6 +458,8 @@ module.exports = {
   syncDbDefaults,
   logActivity,
   ACTIVITY_LOG_PATH,
+  sendPushbulletNotification,
+  sendNtfyNotification,
   //loadConfig,
   //mergeDefaults,
   //generateNginxConfig,

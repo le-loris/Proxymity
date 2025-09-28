@@ -88,4 +88,28 @@ router.get('/stats', (req, res) => {
   }
 });
 
+// POST /test: send notification via pushbullet or ntfy
+router.post('/test-notifier', async (req, res) => {
+  try {
+    const { notifier, ...params } = req.body;
+    let result;
+    if (notifier === 'pushbullet') {
+      // expects: apiKey, title, body
+      const { pushBulletApiKey, title, body } = params;
+      const { sendPushbulletNotification } = require('../../utils');
+      result = await sendPushbulletNotification(pushBulletApiKey, title, body);
+    } else if (notifier === 'ntfy') {
+      const { ntfyServer, ntfyTopic, ntfyId, ntfyPassword, title, body } = params;
+      const { sendNtfyNotification } = require('../../utils');
+      result = await sendNtfyNotification(ntfyServer, ntfyTopic, ntfyId, ntfyPassword, title, body);
+    } else {
+      return res.status(400).json({ error: 'Unknown notifier type' });
+    }
+    res.json({ success: true, result });
+  } catch (e) {
+    console.error('[meta/test] error:', e);
+    res.status(500).json({ error: 'Notification failed', details: e.message });
+  }
+});
+
 module.exports = router;
